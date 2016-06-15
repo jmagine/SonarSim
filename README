@@ -1,0 +1,33 @@
+-------------------------------------------------------------------------------
+               ___ _____ _____ _____ ____    ___ _____ _________               
+              / __|  _  |  _  |  _  |  _ \  / __|_   _|  _   _  |              
+              \ \ | | | | | | | |_| | |_| | \ \   | | | | | | | |              
+              _\ \| |_| | | | |  _  |  _ <  _\ \ _| |_| | | | | |              
+             |___/|_____|_| |_|_| |_|_| \_\|___/|_____|_| |_| |_|              
+-------------------------------------------------------------------------------
+
+Generates realistic hydrophone receiver times given specified multiple object
+placement. This allows for testing of algorithms and visualization of possible
+object locations given receiver locations.
+
+Running program:
+   Place sonarSim1_0.py in current directory, type the command:
+        python sonarSim1_0
+
+Changelog:
+-> V1.0
+   Scalable Grid
+   -User can generate time table from grid of specified unit increment and size
+    in both x and y axes.
+   -The region is centered in x axis, but not in y.
+
+   Objects
+   -X and Y positions fixed before runtime, objects represented in 2D array.
+     -2D array contains x pos, y pos, and 3 receiver times for each object.
+   -Receiver times generated during runtime.
+   
+   Visualization
+   -Can print labeled graph of locations in scalable grid with matching 
+    receiver times, allowing the user to see where an object could possibly be.
+   -Visualization is written to file 'timeTable'.
+   -Has option for single object or set of receiver time visualization.
