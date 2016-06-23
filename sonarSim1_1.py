@@ -2,8 +2,8 @@
 
 '''*-----------------------------------------------------------------------*---
                                                         Author: Jason Ma
-                                                        Date  : Jun 12 2016
-    File Name  : sonarSim1_0.py
+                                                        Date  : Jun 14 2016
+    File Name  : sonarSim1_1.py
     Description: Places several objects relative to an emitter, calculates
                  receiver times in a grid, and then prints a visualization of 
                  all possible object locations to a file named 'timeTable'.
@@ -20,6 +20,8 @@ NUM_SENSORS = 3
 SPACING     = 0.3
 SAMPLE_RATE = 200000
 sensArr     = np.array([NUM_SENSORS, SPACING, SAMPLE_RATE])
+
+recArr      = np.array((NUM_SENSORS, 2))
 
 xRegion     = 10
 yRegion     = 5
@@ -49,6 +51,96 @@ TOLERANCE   = 1 / (sensArr[2] / 10)
 SPEED_WAVE  = 1482
 
 #------------------------------------------------------------------------------
+
+'''quadSolver------------------------------------------------------------------
+Solves quadratic equation
+
+a        - variable
+b        - variable
+c        - variable
+pluMin   - 0 for +
+           1 for -
+[return] - + or - solution based on input
+----------------------------------------------------------------------------'''
+def quadSolver(a, b, c, pluMin):
+
+  if pow(b, 2) - 4 * a * c < 0:
+    return 0
+
+  print(-1 * b, '\t', pow(pow(b, 2) - 4 * a * c, 1/2), '\t', 2 * a)
+  if pluMin == 0:
+    return (-1 * b + pow(pow(b, 2) - 4 * a * c, 1/2)) / (2 * a)
+  else:
+    return (-1 * b - pow(pow(b, 2) - 4 * a * c, 1/2)) / (2 * a)
+
+'''intersectEllipse------------------------------------------------------------
+Calculates ellipse intersections between 3 ellipses
+
+time1    - receiver 1 time
+time2    - receiver 2 time
+time3    - receiver 3 time
+[return] - array with 2 elements containing x and y coordinate of intersection
+           will return 0 0 if finds nothing
+----------------------------------------------------------------------------'''
+def intersectEllipse(time1, time2, time3):
+  #1st dimension = receiver
+  #2nd dimension = a , b^2, c^2, x, y
+  ellipses = np.zeros((3, 5))
+  tempIntersect = np.zeros((4, 2))
+
+  #might not have to store a in array
+
+  #calculate a, b, and c for ellipse
+  ellipses[0][0] = sensArr[1] / -2
+  ellipses[0][1] = time1 * SPEED_WAVE / 2
+  ellipses[0][2] = pow(time1 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
+
+  ellipses[1][0] = -1 * sensArr[1]
+  ellipses[1][1] = time2 * SPEED_WAVE / 2
+  ellipses[1][2] = pow(time2 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
+
+  ellipses[2][0] = sensArr[1] * -3 / 2
+  ellipses[2][1] = time3 * SPEED_WAVE / 2
+  ellipses[2][2] = pow(time3 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
+
+  a = pow(ellipses[0][2] / ellipses[0][1], 2) - pow(ellipses[1][2] /
+      ellipses[1][1], 2)
+  b = -2 * (pow(ellipses[0][2], 2) * ellipses[0][0] /
+      pow(ellipses[0][1], 2) - pow(ellipses[1][2], 2) * ellipses[1][0] /
+      pow(ellipses[1][1], 2))
+  c = b / 2
+  tempIntersect[0][0] = quadSolver(a, b, c, 0)
+  tempIntersect[1][0] = tempIntersect[0][0]
+  tempIntersect[2][0] = quadSolver(a, b, c, 1)
+  tempIntersect[3][0] = tempIntersect[2][0]
+  
+  if tempIntersect[0][0] == 0 or tempIntersect[3][0] == 0:
+    print('no solution')
+  elif (1 - pow(tempIntersect[0][0] + ellipses[0][0], 2) / 
+     pow(ellipses[0][1], 2)) * pow(ellipses[0][2], 2) < 0:
+    print('no solution')
+  else:
+    tempIntersect[0][1] = pow((1 - pow(tempIntersect[0][0] + ellipses[0][0], 2) / 
+                        pow(ellipses[0][1], 2)) * pow(ellipses[0][2], 2), 1/2)
+
+    tempIntersect[1][1] = -1 * tempIntersect[0][1]
+
+    tempIntersect[2][1] = pow((1 - pow(tempIntersect[2][0] + ellipses[0][0], 2) / 
+                        pow(ellipses[0][1], 2)) * pow(ellipses[0][2], 2), 1/2)
+
+    tempIntersect[3][1] = -1 * tempIntersect[2][1]
+
+    for i in range(0, 4):
+      for j in range(0, 2):
+        print('DEBUG - IE  - ', repr(round(tempIntersect[i][j], 5)), end = '\t')
+      print()
+  '''tempIntersect[0][1] = pow((ellipses[0][0] + ellipses[1][0]) / 
+                            (ellipses[0][0] / ellipses[0][1] - 
+                             ellipses[1][0] / ellipses[1][1]), 1/2)
+
+'''
+
+                        
 
 '''calcTimeExact---------------------------------------------------------------
 Calculates exact time for given positions of object and receiver
@@ -279,7 +371,10 @@ file.write('')
 #all subsequent writes append to that file
 
 #print time table with all possible locs of objects
-printPossibleLocs(TOLERANCE)
+#printPossibleLocs(TOLERANCE)
+
+#intersectEllipse
+intersectEllipse(objs[0][0], objs[0][1], objs[0][2])
 
 '''Single Object Resolution----------------------------------------------------
 Places single object relative to emitter, calculates times and displays all
