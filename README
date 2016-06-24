@@ -11,10 +11,20 @@ placement. This allows for testing of algorithms and visualization of possible
 object locations given receiver locations.
 
 Running program:
-   Place sonarSim1_0.py in current directory, type the command:
-        python sonarSim1_0
+   Place sonarSim1_1.py in current directory, type the command:
+        python sonarSim1_1.py
 
 Changelog:
+-> V1.1
+   Ellipse Triangulation
+   -Prints out calculated locations based on list of object locations
+   -Can resolve for multiple objects now, a significant improvement over 1.0's
+    capability
+   -Visualization does not work with 1.1's ellipse triangulation, and still
+    uses the old method of brute forcing times together
+   Quadratic Solving
+   -Has quadratic solving functionality now
+   
 -> V1.0
    Scalable Grid
    -User can generate time table from grid of specified unit increment and size

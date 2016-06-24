@@ -13,9 +13,11 @@ from __future__ import print_function
 from __future__ import division
 import numpy as np
 from math import pow
-#import matplotlib.pyplot as plt #TODO possibly implement this
 
+#------------------------------------------------------------------------------
 #[RUN VARS]--------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
 NUM_SENSORS = 3
 SPACING     = 0.3
 SAMPLE_RATE = 200000
@@ -48,9 +50,26 @@ objs[2][0] = 3.5
 objs[2][1] = 3.5
 
 TOLERANCE   = 1 / (sensArr[2] / 10)
+TOL_DIST = 0.1
 SPEED_WAVE  = 1482
 
 #------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
+
+'''isInRange-------------------------------------------------------------------
+Checks whether a value is in a given range (inclusive on both bounds)
+
+lower    - lower bound of range
+upper    - upper bound of range
+value    - value to check
+[return] - 1 if in range
+           0 if not in range
+----------------------------------------------------------------------------'''
+def isInRange(lower, upper, value):
+  if value >= lower and value <= upper:
+    return 1
+  return 0
 
 '''quadSolver------------------------------------------------------------------
 Solves quadratic equation
@@ -64,17 +83,17 @@ pluMin   - 0 for +
 ----------------------------------------------------------------------------'''
 def quadSolver(a, b, c, pluMin):
 
-  if pow(b, 2) - 4 * a * c < 0:
+  if pow(b, 2) - 4 * a * c < 0 or a == 0:
     return 0
 
-  print(-1 * b, '\t', pow(pow(b, 2) - 4 * a * c, 1/2), '\t', 2 * a)
+  #print(-1 * b, '\t', pow(pow(b, 2) - 4 * a * c, 1/2), '\t', 2 * a)
   if pluMin == 0:
     return (-1 * b + pow(pow(b, 2) - 4 * a * c, 1/2)) / (2 * a)
   else:
     return (-1 * b - pow(pow(b, 2) - 4 * a * c, 1/2)) / (2 * a)
 
 '''intersectEllipse------------------------------------------------------------
-Calculates ellipse intersections between 3 ellipses
+Calculates ellipse intersection locations using 3 receiver times.
 
 time1    - receiver 1 time
 time2    - receiver 2 time
@@ -82,65 +101,126 @@ time3    - receiver 3 time
 [return] - array with 2 elements containing x and y coordinate of intersection
            will return 0 0 if finds nothing
 ----------------------------------------------------------------------------'''
-def intersectEllipse(time1, time2, time3):
-  #1st dimension = receiver
-  #2nd dimension = a , b^2, c^2, x, y
-  ellipses = np.zeros((3, 5))
+def intersectEllipse(time1, time2, time3, tol):
+   
+  #draw ellipses for each receiver of form: (x+a)^2 / b^2 + y^2 / c^2 = 1
+
+  #ellipses[rcvr][0] -> a
+  #ellipses[rcvr][1] -> b^2
+  #ellipses[rcvr][2] -> c^2
+  ellipses = np.zeros((3, 3))
   tempIntersect = np.zeros((4, 2))
-
-  #might not have to store a in array
-
-  #calculate a, b, and c for ellipse
+  
+  #calculate a, b, and c for ellipses
   ellipses[0][0] = sensArr[1] / -2
-  ellipses[0][1] = time1 * SPEED_WAVE / 2
+  ellipses[0][1] = pow(time1 * SPEED_WAVE / 2, 2)
   ellipses[0][2] = pow(time1 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
-
+  
   ellipses[1][0] = -1 * sensArr[1]
-  ellipses[1][1] = time2 * SPEED_WAVE / 2
-  ellipses[1][2] = pow(time2 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
+  ellipses[1][1] = pow(time2 * SPEED_WAVE / 2, 2)
+  ellipses[1][2] = pow(time2 * SPEED_WAVE / 2, 2) - pow(sensArr[1], 2)
 
   ellipses[2][0] = sensArr[1] * -3 / 2
-  ellipses[2][1] = time3 * SPEED_WAVE / 2
-  ellipses[2][2] = pow(time3 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
+  ellipses[2][1] = pow(time3 * SPEED_WAVE / 2, 2)
+  ellipses[2][2] = pow(time3 * SPEED_WAVE / 2, 2) - pow(sensArr[1] * 3 / 2, 2)
 
-  a = pow(ellipses[0][2] / ellipses[0][1], 2) - pow(ellipses[1][2] /
-      ellipses[1][1], 2)
-  b = -2 * (pow(ellipses[0][2], 2) * ellipses[0][0] /
-      pow(ellipses[0][1], 2) - pow(ellipses[1][2], 2) * ellipses[1][0] /
-      pow(ellipses[1][1], 2))
-  c = b / 2
+  #the a, b, and c of quadratic equation, NOT ellipses
+  a = ellipses[0][2] / ellipses[0][1] - ellipses[1][2] / ellipses[1][1]
+  b = 2 * (ellipses[0][2] * ellipses[0][0] / ellipses[0][1] - 
+           ellipses[1][2] * ellipses[1][0] / ellipses[1][1])
+  c = (ellipses[0][2] * pow(ellipses[0][0], 2) / ellipses[0][1] - 
+      ellipses[1][2] * pow(ellipses[1][0], 2) / ellipses[1][1] -
+      ellipses[0][2] + ellipses[1][2])
+
+  #calculate x locs of intersections
   tempIntersect[0][0] = quadSolver(a, b, c, 0)
-  tempIntersect[1][0] = tempIntersect[0][0]
-  tempIntersect[2][0] = quadSolver(a, b, c, 1)
-  tempIntersect[3][0] = tempIntersect[2][0]
+  tempIntersect[1][0] = quadSolver(a, b, c, 1)
   
-  if tempIntersect[0][0] == 0 or tempIntersect[3][0] == 0:
-    print('no solution')
-  elif (1 - pow(tempIntersect[0][0] + ellipses[0][0], 2) / 
-     pow(ellipses[0][1], 2)) * pow(ellipses[0][2], 2) < 0:
-    print('no solution')
+  '''
+  #DEBUG
+  print('DEBUG - IE1 -----------------------------------')
+  print('E1   :\t', ellipses[0][0], ellipses[0][1], ellipses[0][2])
+  print('E2   :\t', ellipses[1][0], ellipses[1][1], ellipses[1][2])
+  print('ABC  :\t', a, b, c)
+  print('XLocs:\t', tempIntersect[0][0], tempIntersect[1][0])
+  '''
+  #calculate y^2
+  ySqr = (1 - pow(tempIntersect[0][0] + ellipses[0][0], 2) / 
+          ellipses[0][1]) * ellipses[0][2]
+
+  #check for invalid x or y locations
+  if (tempIntersect[0][0] != 0) and (ySqr >= 0):
+    tempIntersect[0][1] = pow(ySqr, 1/2)
+    '''
+    print('X1: ',
+          repr(round(tempIntersect[0][0], 5)), 
+          '\tY1: ',
+          repr(round(tempIntersect[0][1], 5)))
+    '''
+
+  '''
+  elif tempIntersect[0][0] == 0:
+    print('no X1 solution')
   else:
-    tempIntersect[0][1] = pow((1 - pow(tempIntersect[0][0] + ellipses[0][0], 2) / 
-                        pow(ellipses[0][1], 2)) * pow(ellipses[0][2], 2), 1/2)
+    print('no Y1 solution', ySqr)
+  '''
 
-    tempIntersect[1][1] = -1 * tempIntersect[0][1]
+  #calculate y^2
+  ySqr = (1 - pow(tempIntersect[1][0] + ellipses[0][0], 2) / 
+          ellipses[0][1]) * ellipses[0][2]
 
-    tempIntersect[2][1] = pow((1 - pow(tempIntersect[2][0] + ellipses[0][0], 2) / 
-                        pow(ellipses[0][1], 2)) * pow(ellipses[0][2], 2), 1/2)
+  #check for invalid x or y locations
+  if (tempIntersect[1][0] != 0) and (ySqr >= 0):
+    tempIntersect[1][1] = pow(ySqr, 1/2)
+    '''
+    print('X2: ',
+          repr(round(tempIntersect[1][0], 5)), 
+          '\tY2: ',
+          repr(round(tempIntersect[1][1], 5)))
+    '''
 
-    tempIntersect[3][1] = -1 * tempIntersect[2][1]
+  '''
+  elif tempIntersect[1][0] == 0:
+    print('no X2 solution')
+  else:
+    print('no Y2 solution', ySqr)
+  '''
 
-    for i in range(0, 4):
-      for j in range(0, 2):
-        print('DEBUG - IE  - ', repr(round(tempIntersect[i][j], 5)), end = '\t')
-      print()
-  '''tempIntersect[0][1] = pow((ellipses[0][0] + ellipses[1][0]) / 
-                            (ellipses[0][0] / ellipses[0][1] - 
-                             ellipses[1][0] / ellipses[1][1]), 1/2)
+  '''[PART 2] Use third ellipse to resolve for point------------------------'''
+  #the a, b, and c of quadratic equation, NOT ellipses
+  a = ellipses[0][2] / ellipses[0][1] - ellipses[2][2] / ellipses[2][1]
+  b = 2 * (ellipses[0][2] * ellipses[0][0] / ellipses[0][1] - 
+           ellipses[2][2] * ellipses[2][0] / ellipses[2][1])
+  c = (ellipses[0][2] * pow(ellipses[0][0], 2) / ellipses[0][1] - 
+      ellipses[2][2] * pow(ellipses[2][0], 2) / ellipses[2][1] -
+      ellipses[0][2] + ellipses[2][2])
 
-'''
+  #calculate x locs of intersections
+  tempIntersect[2][0] = quadSolver(a, b, c, 0)
+  tempIntersect[3][0] = quadSolver(a, b, c, 1)
 
-                        
+  '''
+  #DEBUG
+  print('DEBUG - IE2 -----------------------------------')
+  print('E1   :\t', ellipses[0][0], ellipses[0][1], ellipses[0][2])
+  print('E2   :\t', ellipses[2][0], ellipses[2][1], ellipses[2][2])
+  print('ABC  :\t', a, b, c)
+  print('XLocs:\t', tempIntersect[2][0], tempIntersect[3][0])
+  '''
+  
+  #try all 4 possible intersection points with tolerance against 3rd ellipse
+  for i in range(0, 2):
+    for j in range(2, 4):
+      if tempIntersect[i][0] != 0:
+        if isInRange(tempIntersect[i][0] - tol, tempIntersect[i][0] + tol,
+                     tempIntersect[j][0]):
+          print('+ res:\tX:', repr(round(tempIntersect[i][0], 5)), 
+                '\tY:', repr(round(tempIntersect[i][1], 5)))
+        #else:
+        #  print('- res:\t', i, j)
+      #else:
+      #  print('- res:\tNo i')
+
 
 '''calcTimeExact---------------------------------------------------------------
 Calculates exact time for given positions of object and receiver
@@ -228,20 +308,6 @@ def initTimeTable(xRegion, yRegion, xInc, yInc):
                                  yRegion - row * yInc, sensArr[1] * rcvr)
 
         #print(repr(round(timeTable[row][col][rcvr - 1], 12))) #DEBUG        
-
-'''isInRange-------------------------------------------------------------------
-Checks whether a value is in a given range (inclusive on both bounds)
-
-lower    - lower bound of range
-upper    - upper bound of range
-value    - value to check
-[return] - 1 if in range
-           0 if not in range
-----------------------------------------------------------------------------'''
-def isInRange(lower, upper, value):
-  if value >= lower and value <= upper:
-    return 1
-  return 0
 
 '''printPossibleLocs-----------------------------------------------------------
 Prints a visualization of possible object locations given an array of receiver
@@ -362,19 +428,27 @@ initTimeTable(xRegion, yRegion, xInc, yInc)
 #initialize objs array with times
 for obj in range(0, NUM_OBJECTS):
   for rcvr in range(0, int(sensArr[0])):
-    objs[obj][rcvr + 2] = calcTime(objs[obj][0], objs[obj][1], sensArr[1] * (rcvr + 1))
+    objs[obj][rcvr + 2] = calcTime(objs[obj][0], objs[obj][1], 
+                                   sensArr[1] * (rcvr + 1))
 
-#clear file
+#clear file, all subsequent writes append to this file
 file = open('timeTable', 'w')
 file.write('')
 
-#all subsequent writes append to that file
-
 #print time table with all possible locs of objects
 #printPossibleLocs(TOLERANCE)
+'''
+#single object ellipse intersection detection
+for obj1 in range(0, NUM_OBJECTS):
+  intersectEllipse(objs[obj1][2], objs[obj1][3], objs[obj1][4], TOL_DIST)
+'''
+#multiple object ellipse intersection detection
+intersectEllipse
+for obj1 in range(0, NUM_OBJECTS):
+  for obj2 in range(0, NUM_OBJECTS):
+    for obj3 in range(0, NUM_OBJECTS):
+      intersectEllipse(objs[obj1][2], objs[obj2][3], objs[obj3][4], TOL_DIST)
 
-#intersectEllipse
-intersectEllipse(objs[0][0], objs[0][1], objs[0][2])
 
 '''Single Object Resolution----------------------------------------------------
 Places single object relative to emitter, calculates times and displays all
