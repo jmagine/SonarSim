@@ -98,6 +98,7 @@ Calculates ellipse intersection locations using 3 receiver times.
 time1    - receiver 1 time
 time2    - receiver 2 time
 time3    - receiver 3 time
+tol      - tolerance for variance in x
 [return] - array with 2 elements containing x and y coordinate of intersection
            will return 0 0 if finds nothing
 ----------------------------------------------------------------------------'''
