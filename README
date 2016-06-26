@@ -10,11 +10,34 @@ Generates realistic hydrophone receiver times given specified multiple object
 placement. This allows for testing of algorithms and visualization of possible
 object locations given receiver locations.
 
+Dependencies:
+   -Python 2.7 (probably easily modifyable for 3.x since I use the print
+                function pretty heavily. Also likely won't be printing much
+		in final version, mostly for debugging)
+   -Numpy
+   
+Not dependent but I also remember adding the following on my Raspberry Pi:
+   -git
+   -gvim
+   -vim
+   -I think python 3.4 is also on my pi? Dunno which version my program really
+    uses since I appear to have both 2.7 and 3.4 as well as compatibility
+    libraries. I did import from __future__ though so I think I'm using 2.7?
+
 Running program:
-   Place sonarSim1_1.py in current directory, type the command:
-        python sonarSim1_1.py
+   Place sonarSim1_2.py in current directory, type the command:
+        python sonarSim1_2.py
 
 Changelog:
+-> V1.2
+   Ellipse Triangulation
+   -Added support for a debugging mode for beautiful debugging output.
+   
+   Driver
+   -TODO will work on a way to distinguish objects from the floor of the pool
+    and generally determine positions in 3D space. May need input from previous
+    input as robot moves.
+
 -> V1.1
    Ellipse Triangulation
    -Prints out calculated locations based on list of object locations
