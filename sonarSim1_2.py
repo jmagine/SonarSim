@@ -32,25 +32,51 @@ yInc        = .1
 center      = 0
 timeTable   = np.zeros((yRegion / yInc + 1, xRegion / xInc + 1, sensArr[0]))
 
-NUM_OBJECTS = 4
-objs        = np.zeros((NUM_OBJECTS, 5))
+NUM_OBJECTS = 12
+objs        = np.zeros((NUM_OBJECTS * 2, 5))
 #objs[object][0] -> object x
 #objs[object][1] -> object y
 #objs[object][2] -> object rec1 time
 #objs[object][3] -> object rec2 time
 #objs[object][4] -> object rec3 time
 
-objs[0][0]  = 3
-objs[0][1]  = 4
+objs[0][0]  = 1
+objs[0][1]  = 1
 
-objs[1][0]  = -15
-objs[1][1]  = 20
+objs[1][0]  = -1
+objs[1][1]  = 1
 
-objs[2][0]  = -3
-objs[2][1]  = 4
+objs[2][0]  = 0
+objs[2][1]  = 1
 
-objs[3][0]  = 15
-objs[3][1]  = 20
+objs[3][0]  = 0
+objs[3][1]  = 3
+
+objs[4][0]  = 5
+objs[4][1]  = 3
+
+objs[5][0]  = -5
+objs[5][1]  = 3
+
+objs[6][0]  = 0
+objs[6][1]  = 10
+
+objs[7][0]  = 5
+objs[7][1]  = 10
+
+objs[8][0]  = -5
+objs[8][1]  = 10
+
+objs[9][0]  = 15
+objs[9][1]  = 15
+
+objs[10][0]  = -20
+objs[10][1]  = 20
+
+objs[11][0]  = 0
+objs[11][1]  = 25
+
+
 
 TOLERANCE   = 1 / (sensArr[2] / 10)
 TOL_DIST    = 1
@@ -484,7 +510,7 @@ def driver():
   '''
   #multiple object ellipse intersection detection
   i = 0
-  locs = np.zeros((NUM_OBJECTS, 2))
+  locs = np.zeros((NUM_OBJECTS * 2, 2))
   for obj1 in range(0, NUM_OBJECTS):
     for obj2 in range(0, NUM_OBJECTS):
       for obj3 in range(0, NUM_OBJECTS):
@@ -494,12 +520,21 @@ def driver():
           locs[i][0] = result[0]
           locs[i][1] = result[1]
           i = i + 1
-  print('      +-----------------+')
-  print('      |  X       Y      |')  
-  print('      +=================+')
-  for i in range(0, NUM_OBJECTS):
-    print('      |\t{}\t{}\t|'.format(repr(round(locs[i][0], 3)), repr(round(locs[i][1], 3))))
-  print('      +-----------------+')  
+
+  print('      +-----------------+-----------------+')
+  print('      |  In no particular Order:          |')
+  print('      +-----------------+-----------------+')
+  print('      |  Found Locs     |  Actual Locs    |')  
+  print('      +-----------------+-----------------+')
+  print('      |  X       Y      |  X       Y      |')  
+  print('      +=================+=================+')
+  for i in range(0, NUM_OBJECTS * 2):
+    print('   {} |\t{}\t{}\t| {}\t  {}\t  |'.format(repr(i + 1).rjust(2),
+                                                 repr(round(locs[i][0], 3)), 
+                                                 repr(round(locs[i][1], 3)),
+                                                 repr(round(objs[i][0], 3)),
+                                                 repr(round(objs[i][1], 3))))
+  print('      +-----------------+-----------------+')  
 
 driver()
 
