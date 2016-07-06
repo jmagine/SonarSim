@@ -18,9 +18,9 @@ from math import pow
 #[RUN VARS]--------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
-NUM_OBJECTS   = 12        #num of objects
-SENS_NUM      = 4        #num of sensors
-SENS_SAMPLE   = 200000   #sensor sample rate
+NUM_OBJECTS   = 12         #num of objects
+SENS_NUM      = 4          #num of sensors
+SENS_SAMPLE   = 200000     #sensor sample rate
 
 TOL_DIST      = 1          #ellipse-circle intersection tolerance
 TOL_OBJ       = .25        #multiple object detection tolerance
@@ -52,6 +52,15 @@ objs          = np.zeros((NUM_OBJECTS * EXTRA_FACTOR, 3))
   #objs[object][0] -> object x
   #objs[object][1] -> object y
   #objs[object][2] -> object z
+'''
+objs[0][0]    = 5
+objs[0][1]    = 3
+objs[0][2]    = 2
+
+objs[1][0]    = -5
+objs[1][1]    = 3
+objs[1][2]    = -2
+'''
 
 objs[0][0]    = 1
 objs[0][1]    = 1
@@ -102,7 +111,7 @@ objs[11][1]   = 25
 objs[11][2]   = 50
 
 #DEBUG-------------------------------------------------------------------------
-INTER_ELL_DEBUG = 0
+INTER_ELL_DEBUG = 1
 CALC_TIME_DEBUG = 0
 
 #------------------------------------------------------------------------------
@@ -269,7 +278,7 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
         if isInRange(tempIntersect[i][0] - tol, tempIntersect[i][0] + tol,
                      tempIntersect[j][0]):
           if debug:
-            print('| +   X: {0:10} Y: {1:10}\t\t\t\t\t\t\t|'.format(repr(round(tempIntersect[i][0], 3)), 
+            print('| +  X: {0:10} Y: {1:10}\t\t\t\t\t\t\t|'.format(repr(round(tempIntersect[i][0], 3)), 
                                                  repr(round(tempIntersect[i][1], 3))))
 
           result[0] = tempIntersect[i][0]
@@ -281,7 +290,7 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
   
   if result[1] == 0:
     if debug:
-      print('')
+      print('+=======================================+======================================+\n')
     return result
 
   '''[PART 3] Use fourth receiver for 3D resolution-------------------------'''
