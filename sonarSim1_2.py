@@ -18,19 +18,19 @@ from math import pow
 #[RUN VARS]--------------------------------------------------------------------
 #------------------------------------------------------------------------------
 
-NUM_SENSORS = 3
-SPACING     = 0.3
-SAMPLE_RATE = 200000
-sensArr     = np.array([NUM_SENSORS, SPACING, SAMPLE_RATE])
+SENS_NUM     = 3        #num of sensors
+SENS_SPACE_X = 0.3      #x spacing between sensors
+SENS_SPACE_Y = 0.3      #y spacing between sensors
+SENS_SAMPLE  = 200000   #sensor sample rate
 
-recArr      = np.array((NUM_SENSORS, 2))
+sensArr      = np.array((SENS_NUM, 2))
 
 xRegion     = 10
 yRegion     = 5
 xInc        = .1
 yInc        = .1
 center      = 0
-timeTable   = np.zeros((yRegion / yInc + 1, xRegion / xInc + 1, sensArr[0]))
+timeTable   = np.zeros((yRegion / yInc + 1, xRegion / xInc + 1, SENS_NUM))
 
 NUM_OBJECTS = 12
 objs        = np.zeros((NUM_OBJECTS * 2, 5))
@@ -78,7 +78,7 @@ objs[11][1]  = 25
 
 
 
-TOLERANCE   = 1 / (sensArr[2] / 10)
+TOLERANCE   = 1 / (SENS_SAMPLE / 10)
 TOL_DIST    = 1
 SPEED_WAVE  = 1482
 
@@ -147,25 +147,25 @@ def intersectEllipse(time1, time2, time3, tol, debug):
   result        = np.zeros((2))  
   
   #calculate a, b, and c for ellipses
-  ellipses[0][0] = sensArr[1] / -2
+  ellipses[0][0] = SENS_SPACE_X / -2
   ellipses[0][1] = pow(time1 * SPEED_WAVE / 2, 2)
-  ellipses[0][2] = pow(time1 * SPEED_WAVE / 2, 2) - pow(sensArr[1] / 2, 2)
+  ellipses[0][2] = pow(time1 * SPEED_WAVE / 2, 2) - pow(SENS_SPACE_X / 2, 2)
   
-  ellipses[1][0] = -1 * sensArr[1]
+  ellipses[1][0] = -1 * SENS_SPACE_X
   ellipses[1][1] = pow(time2 * SPEED_WAVE / 2, 2)
-  ellipses[1][2] = pow(time2 * SPEED_WAVE / 2, 2) - pow(sensArr[1], 2)
+  ellipses[1][2] = pow(time2 * SPEED_WAVE / 2, 2) - pow(SENS_SPACE_X, 2)
 
-  ellipses[2][0] = sensArr[1] * -3 / 2
+  ellipses[2][0] = SENS_SPACE_X * -3 / 2
   ellipses[2][1] = pow(time3 * SPEED_WAVE / 2, 2)
-  ellipses[2][2] = pow(time3 * SPEED_WAVE / 2, 2) - pow(sensArr[1] * 3 / 2, 2)
+  ellipses[2][2] = pow(time3 * SPEED_WAVE / 2, 2) - pow(SENS_SPACE_X * 3 / 2, 2)
 
   #the a, b, and c of quadratic equation, NOT ellipses
-  a = ellipses[0][2] / ellipses[0][1] - ellipses[1][2] / ellipses[1][1]
+  a =      ellipses[0][2] / ellipses[0][1] - ellipses[1][2] / ellipses[1][1]
   b = 2 * (ellipses[0][2] * ellipses[0][0] / ellipses[0][1] - 
            ellipses[1][2] * ellipses[1][0] / ellipses[1][1])
-  c = (ellipses[0][2] * pow(ellipses[0][0], 2) / ellipses[0][1] - 
-      ellipses[1][2] * pow(ellipses[1][0], 2) / ellipses[1][1] -
-      ellipses[0][2] + ellipses[1][2])
+  c =     (ellipses[0][2] * pow(ellipses[0][0], 2) / ellipses[0][1] - 
+           ellipses[1][2] * pow(ellipses[1][0], 2) / ellipses[1][1] -
+           ellipses[0][2] + ellipses[1][2])
 
   #calculate x locs of intersections
   tempIntersect[0][0] = quadSolver(a, b, c, 0)
@@ -340,7 +340,7 @@ def calcTime(xObj, yObj, rcvrDist):
         end = '\n')
   '''
 
-  return totalTime - totalTime % (1 / sensArr[2]) + (1 / sensArr[2])
+  return totalTime - totalTime % (1 / SENS_SAMPLE) + (1 / SENS_SAMPLE)
 
 '''initTimeTable---------------------------------------------------------------
 Initializes time table for given receiver positions
@@ -358,7 +358,7 @@ def initTimeTable(xRegion, yRegion, xInc, yInc):
 
   for row in range(0, int(numYObj) + 1):
     for col in range(0, int(numXObj) + 1):
-      for rcvr in range(1, int(sensArr[0]) + 1):
+      for rcvr in range(1, int(SENS_NUM) + 1):
         '''
         #DEBUG
         print('DEBUG - ITT - ',
@@ -370,7 +370,7 @@ def initTimeTable(xRegion, yRegion, xInc, yInc):
               end = '')
         '''
         timeTable[row][col][rcvr - 1] = calcTime(col * xInc - xRegion / 2,
-                                 yRegion - row * yInc, sensArr[1] * rcvr)
+                                 yRegion - row * yInc, SENS_SPACE_X * rcvr)
 
         #print(repr(round(timeTable[row][col][rcvr - 1], 12))) #DEBUG        
 
@@ -493,9 +493,9 @@ def driver():
 
   #initialize objs array with times
   for obj in range(0, NUM_OBJECTS):
-    for rcvr in range(0, int(sensArr[0])):
+    for rcvr in range(0, SENS_NUM):
       objs[obj][rcvr + 2] = calcTime(objs[obj][0], objs[obj][1], 
-          sensArr[1] * (rcvr + 1))
+          SENS_SPACE_X * (rcvr + 1))
 
   #clear file, all subsequent writes append to this file
   file = open('timeTable', 'w')
@@ -546,9 +546,9 @@ matching locations on grid
 objX = 5
 objY = 5
 
-objT1 = calcTime(objX, objY, sensArr[1] * 1)
-objT2 = calcTime(objX, objY, sensArr[1] * 2)
-objT3 = calcTime(objX, objY, sensArr[1] * 3)
+objT1 = calcTime(objX, objY, SENS_SPACE_X * 1)
+objT2 = calcTime(objX, objY, SENS_SPACE_X * 2)
+objT3 = calcTime(objX, objY, SENS_SPACE_X * 3)
 
 printTimeTable(objT1, objT2, objT3, TOLERANCE)
 '''
