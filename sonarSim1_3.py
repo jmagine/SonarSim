@@ -19,16 +19,13 @@ from math import pow
 #------------------------------------------------------------------------------
 
 NUM_OBJECTS   = 12        #num of objects
-
 SENS_NUM      = 4        #num of sensors
-SENS_X_DISP   = 0.2
-SENS_Z_DISP   = 0.3
 SENS_SAMPLE   = 200000   #sensor sample rate
 
-TOLERANCE     = 1 / (SENS_SAMPLE / 10)
-TOL_DIST      = 1          
+TOL_DIST      = 1          #ellipse-circle intersection tolerance
+TOL_OBJ       = .25        #multiple object detection tolerance
 SPEED_WAVE    = 1482       #speed of sound in water
-
+EXTRA_FACTOR  = 2          #allocate space in case extra objects are found
 sensArr       = np.zeros((SENS_NUM, 3 + NUM_OBJECTS))
   #sensArr[rcvr][0]  -> receiver x
   #sensArr[rcvr][1]  -> receiver y
@@ -39,26 +36,19 @@ sensArr[0][0] = 0
 sensArr[0][1] = 0
 sensArr[0][2] = 0
 
-sensArr[1][0] = -1 * SENS_X_DISP
+sensArr[1][0] = -.15
 sensArr[1][1] = 0
 sensArr[1][2] = 0
 
-sensArr[2][0] = SENS_X_DISP
+sensArr[2][0] = .25
 sensArr[2][1] = 0
 sensArr[2][2] = 0
 
 sensArr[3][0] = 0
 sensArr[3][1] = 0
-sensArr[3][2] = SENS_Z_DISP
+sensArr[3][2] = .2
 
-xRegion       = 10
-yRegion       = 5
-xInc          = .1
-yInc          = .1
-center        = 0
-timeTable     = np.zeros((yRegion / yInc + 1, xRegion / xInc + 1, SENS_NUM))
-
-objs          = np.zeros((NUM_OBJECTS * 5, 3))
+objs          = np.zeros((NUM_OBJECTS * EXTRA_FACTOR, 3))
   #objs[object][0] -> object x
   #objs[object][1] -> object y
   #objs[object][2] -> object z
@@ -111,10 +101,9 @@ objs[11][0]   = 0
 objs[11][1]   = 25
 objs[11][2]   = 50
 
-
 #DEBUG-------------------------------------------------------------------------
-INTER_ELL_DEBUG = 1
-CALC_TIME_DEBUG = 1
+INTER_ELL_DEBUG = 0
+CALC_TIME_DEBUG = 0
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -167,40 +156,47 @@ tol      - tolerance for variance in x
            will return 0 0 if finds nothing
 ----------------------------------------------------------------------------'''
 def resolveTArray(time1, time2, time3, time4, tol, debug):
-   
-  #draw ellipses for each receiver of form: (x+a)^2 / b^2 + y^2 / c^2 = 1
-  #draw circle for emitter which also receives
-  print(time1, time2, time3, time4)
+  #                  r3
+  #                  |
+  #             r1---E---r2
+  #draw ellipses for r1, r2, and r3 of form: (x+a)^2 / b^2 + y^2 / c^2 = 1
+  #draw circle for E
+  
   tempIntersect = np.zeros((4, 2))
   result        = np.zeros((3))  
-
+  
+  #emitter radius squared
   r2 = pow(time1 * SPEED_WAVE / 2, 2)
 
-  a = SENS_X_DISP / -2
+  '''[PART 1] Use time1 and time2 to come up with possible locations in 2D--'''
+
+  #calculate x locs for EOE EO1
+  a = sensArr[1][0] / 2
   b = pow(time2 * SPEED_WAVE / 2, 2)
   c = b - pow(a, 2)
 
-  #calc the a, b, and c of quadratic equation, NOT ellipses
+  #calculate x locs of intersections
   quada = 1 - c / b
   quadb = 2 * c * a / b
   quadc = c * (1 - pow(a, 2) / b) - r2
-  #calculate z locs of intersections
   tempIntersect[0][0] = quadSolver(quada, quadb, quadc, 0)
   tempIntersect[1][0] = quadSolver(quada, quadb, quadc, 1)
 
   #DEBUG
   if debug:
-    print('+-------------------------------------------+')
-    print('| [DEBUG]   intersectEllipse   sonarSim 1.3 |')  
-    print('+-------------------------------+-----------+-------------------+---------------')
-    print('|  ABC: {}\t{}\t{}'.format(repr(round(a, 4)), 
-                                        repr(round(b, 4)), 
-                                        repr(round(c, 4))),
-          end = '\t|')
-    print(' XLocs: {}      {}'.format(repr(round(tempIntersect[0][0], 4)), 
-                                    repr(round(tempIntersect[1][0], 4))),
-           end = '\t|\n')
-    print('+-------------------------------+-------------------------------+---------------')  
+    print('+=[DEBUG]===============================+======================================+')
+    print('| resolveTArray      sonarSim 1.3       ', end = '')
+    print('| Data: {0:7} {1:7} {2:7} {3:7}\t|'.format(repr(round(time1, 5)), 
+                                                      repr(round(time2, 5)), 
+                                                      repr(round(time3, 5)), 
+                                                      repr(round(time4, 5))))
+    print('+-[Part1]-------------------------------+--------------------------------------+')
+    print('|  ABC: {0:9} {1:9} {2:9}\t|'.format(repr(round(a, 3)), 
+                                                repr(round(b, 3)), 
+                                                repr(round(c, 3))), 
+                                                end = '')
+    print(' XLocs: {0:9} {1:9}\t\t|'.format(repr(round(tempIntersect[0][0], 2)), 
+                                            repr(round(tempIntersect[1][0], 2))))
   
   #calculate y^2 for any found xs
   for i in range(0, 2):
@@ -210,21 +206,19 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
     if (tempIntersect[i][0] != 0) and (ySqr >= 0):
       tempIntersect[i][1] = pow(ySqr, 1/2)
       if debug:
-        print('| + X{}:'.format(i + 1),
-              repr(round(tempIntersect[i][0], 3)), 
-              '\t\t\t| Y{}:'.format(i + 1),
-              repr(round(tempIntersect[i][1], 3)),
-              '\t\t\t|')
+        print('| + X{0:}: {1:8}\t\t\t| Y{0:}: {2:8}\t\t\t\t|'.format(i + 1,
+                                          repr(round(tempIntersect[i][0], 3)), 
+                                          repr(round(tempIntersect[i][1], 3))))
     elif debug:
       if tempIntersect[i][0] == 0:
-        print('| - X{}: no solution\t\t|\t\t\t\t|'.format(i + 1))
+        print('| - X{}: no solution\t\t|\t\t\t\t\t|'.format(i + 1))
       else:
-        print('| - Y{}: undef sqrt({})\t|\t\t\t\t|'.format(i + 1, 
+        print('| - Y{0:}: undef sqrt({1:18})\t|\t\t\t\t\t|'.format(i + 1, 
                                                         repr(round(ySqr, 3))))
 
-  '''[PART 2] Use third ellipse to resolve for point------------------------'''
+  '''[PART 2] Use third receiver to resolve for point-----------------------'''
 
-  a = SENS_X_DISP / 2
+  a = sensArr[2][0] / 2
   b = pow(time3 * SPEED_WAVE / 2, 2)
   c = b - pow(a, 2)
 
@@ -239,15 +233,13 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
 
   #DEBUG
   if debug:
-    print('+-------------------------------+-----------+-------------------+---------------')
-    print('|  ABC: {}\t{}\t{}'.format(repr(round(a, 4)), 
-                                        repr(round(b, 4)), 
-                                        repr(round(c, 4))),
-          end = '\t|')
-    print(' XLocs: {}      {}'.format(repr(round(tempIntersect[2][0], 4)), 
-                                    repr(round(tempIntersect[3][0], 4))),
-           end = '\t|\n')
-    print('+-------------------------------+-------------------------------+---------------')  
+    print('+-[Part2]-------------------------------+--------------------------------------+')
+    print('|  ABC: {0:9} {1:9} {2:9}\t|'.format(repr(round(a, 3)), 
+                                                repr(round(b, 3)), 
+                                                repr(round(c, 3))),
+          end = '')
+    print(' XLocs: {0:9} {1:9}\t\t|'.format(repr(round(tempIntersect[0][0], 2)), 
+                                            repr(round(tempIntersect[1][0], 2))))
   
   #calculate y^2 for any found xs
   for i in range(2, 4):
@@ -257,20 +249,18 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
     if (tempIntersect[i][0] != 0) and (ySqr >= 0):
       tempIntersect[i][1] = pow(ySqr, 1/2)
       if debug:
-        print('| + X{}:'.format(i + 1),
-              repr(round(tempIntersect[i][0], 3)), 
-              '\t\t\t| Y{}:'.format(i + 1),
-              repr(round(tempIntersect[i][1], 3)),
-              '\t\t\t|')
+        print('| + X{0:}: {1:8}\t\t\t| Y{0:}: {2:8}\t\t\t\t|'.format(i + 1,
+                                          repr(round(tempIntersect[i][0], 3)), 
+                                          repr(round(tempIntersect[i][1], 3))))
     elif debug:
       if tempIntersect[i][0] == 0:
-        print('| - X{}: no solution\t\t|\t\t\t\t|'.format(i + 1))
+        print('| - X{}: no solution\t\t|\t\t\t\t\t|'.format(i + 1))
       else:
-        print('| - Y{}: undef sqrt({})\t|\t\t\t\t|'.format(i + 1, 
+        print('| - Y{0:}: undef sqrt({1:18})\t|\t\t\t\t\t|'.format(i + 1, 
                                                         repr(round(ySqr, 3))))
 
   if debug:
-    print('+-------------------------------+-------------------------------+---------------')
+    print('+---------------------------------------+--------------------------------------+')
 
   #try all 4 possible intersection points with tolerance against 3rd ellipse
   for i in range(0, 2):
@@ -278,15 +268,16 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
       if tempIntersect[i][0] != 0:
         if isInRange(tempIntersect[i][0] - tol, tempIntersect[i][0] + tol,
                      tempIntersect[j][0]):
-          print('\t+ X: {}\tY: {}'.format(repr(round(tempIntersect[i][0], 3)), 
-                                                     repr(round(tempIntersect[i][1], 3))))
+          if debug:
+            print('| +   X: {0:10} Y: {1:10}\t\t\t\t\t\t\t|'.format(repr(round(tempIntersect[i][0], 3)), 
+                                                 repr(round(tempIntersect[i][1], 3))))
 
           result[0] = tempIntersect[i][0]
           result[1] = tempIntersect[i][1]
         elif debug:
-          print('\t- {} {}'.format(i, j))
+          print('| - {} {}\t\t\t\t\t\t\t\t\t\t|'.format(i, j))
       elif debug:
-        print('\t- No i')
+        print('| - No i\t\t\t\t\t\t\t\t\t\t|')
   
   if result[1] == 0:
     if debug:
@@ -295,7 +286,7 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
 
   '''[PART 3] Use fourth receiver for 3D resolution-------------------------'''
   
-  a = SENS_Z_DISP / 2
+  a = sensArr[3][2] / 2
   b = pow(time4 * SPEED_WAVE / 2, 2)
   c = b - pow(a, 2)
 
@@ -310,15 +301,13 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
 
   #DEBUG
   if debug:
-    print('+-------------------------------+-------------------------------+---------------')    
-    print('|  ABC: {}\t{}\t{}'.format(repr(round(a, 4)), 
-                                      repr(round(b, 4)), 
-                                      repr(round(c, 4))),
-          end = '\t|')
-    print(' ZLocs: {}   {}'.format(repr(round(tempIntersect[0][0], 4)), 
-                                   repr(round(tempIntersect[1][0], 4))),
-           end = '\t|\n')
-    print('+-------------------------------+-------------------------------+---------------')  
+    print('+-[Part3]-------------------------------+--------------------------------------+')
+    print('|  ABC: {0:9} {1:9} {2:9}\t|'.format(repr(round(a, 3)), 
+                                                repr(round(b, 3)), 
+                                                repr(round(c, 3))),
+          end = '')
+    print(' ZLocs: {0:9} {1:9}\t\t|'.format(repr(round(tempIntersect[0][0], 2)), 
+                                            repr(round(tempIntersect[1][0], 2))))
   
   #calculate y^2 for any found xs
   for i in range(0, 2):
@@ -328,22 +317,18 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
     if (tempIntersect[i][0] != 0) and (ySqr >= 0):
       tempIntersect[i][1] = pow(ySqr, 1/2)
       if debug:
-        print('| + Z{}:'.format(i + 1),
-              repr(round(tempIntersect[i][0], 3)), 
-              '\t\t\t| Y{}:'.format(i + 1),
-              repr(round(tempIntersect[i][1], 3)),
-              '\t\t\t|')
+        print('| + Z{0:}: {1:8}\t\t\t| Y{0:}: {2:8}\t\t\t\t|'.format(i + 1,
+                                          repr(round(tempIntersect[i][0], 3)), 
+                                          repr(round(tempIntersect[i][1], 3))))
     elif debug:
       if tempIntersect[i][0] == 0:
-        print('| - Z{}: no solution\t\t|\t\t\t\t|'.format(i + 1))
+        print('| - Z{}: no solution\t\t|\t\t\t\t\t|'.format(i + 1))
       else:
-        print('| - Y{}: undef sqrt({})\t|\t\t\t\t|'.format(i + 1, 
+        print('| - Y{0:}: undef sqrt({1:18})\t|\t\t\t\t\t|'.format(i + 1, 
                                                         repr(round(ySqr, 3))))
 
   if debug:
-    print('+-------------------------------+-------------------------------+---------------')  
-  
-  
+    print('+---------------------------------------+--------------------------------------+')
 
   #circle circle intersections in 3D space
   for i in range(0, 2):
@@ -352,7 +337,8 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
       y2 = pow(tempIntersect[i][1], 2) - pow(result[0], 2)
 
       if y1 < 0 or y2 < 0:
-        print(' - invalid y1 or y2')
+        if debug:
+          print('| - invalid Y1 or Y2\t\t\t\t\t\t\t\t\t\t|')
         continue
 
       y1 = pow(y1, 1/2)
@@ -363,23 +349,25 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
         result[2] = tempIntersect[i][0]
       
         if debug:
-          print(' + y1: {} y2: {}'.format(y1, y2))
-          print('   x: {} y: {} z: {}'.format(result[0], result[1], result[2]))
+          print('| + Y1: {0:10} Y2: {1:10}\t> X: {2:8} Y: {3:8} Z: {4:8}\t|'.format(
+                                                   repr(round(y1, 3)),
+                                                   repr(round(y2, 3)),
+                                                   repr(round(result[0], 3)),
+                                                   repr(round(result[1], 3)),
+                                                   repr(round(result[2], 3))))
 
       elif debug:
-        print(' - y1: {} y2: {}'.format(y1, y2))
+        print('| - Y1: {0:10} Y2: {1:10}\t\t\t\t\t\t|'.format(repr(round(y1, 3)),
+                                                 repr(round(y2, 3))))
 
     elif debug:
-      print(' - no Y')
+      print('| - no Y\t\t\t\t\t\t\t\t\t|')
 
   if debug:
-    print('')
+    print('+=======================================+======================================+\n')
+
 
   return result
-
-'''
-Uses 
-'''
 
 '''calcTime--------------------------------------------------------------------
 Calculates processed time for given positions of object and receiver
@@ -451,7 +439,7 @@ def driver():
   '''
   #multiple object ellipse intersection detection
   i = 0
-  locs = np.zeros((NUM_OBJECTS * 5, 3))
+  locs = np.zeros((NUM_OBJECTS * EXTRA_FACTOR, 3))
   for obj1 in range(0, NUM_OBJECTS):
     for obj2 in range(0, NUM_OBJECTS):
       for obj3 in range(0, NUM_OBJECTS):
@@ -460,31 +448,54 @@ def driver():
                                  sensArr[2][3 + obj3], sensArr[3][3 + obj4],
                                  TOL_DIST, INTER_ELL_DEBUG)
           if(result[2] != 0):
-            locs[i][0] = result[0]
-            locs[i][1] = result[1]
-            locs[i][2] = result[2]
-            i = i + 1
+            match = 0
+            for j in range(0, i):
+              if(isInRange(locs[j][0] - TOL_OBJ, locs[j][0] + TOL_OBJ, result[0]) and
+                 isInRange(locs[j][1] - TOL_OBJ, locs[j][1] + TOL_OBJ, result[1]) and
+                 isInRange(locs[j][2] - TOL_OBJ, locs[j][2] + TOL_OBJ, result[2])):
+                match = 1
+            if match == 0:
+              locs[i][0] = result[0]
+              locs[i][1] = result[1]
+              locs[i][2] = result[2]
+              i = i + 1
+  
+  print('      +===================================================+')
+  print('      |  E: {0:5} {1:5} {2:5}   | R1: {3:5} {4:5} {5:5}   |'.format(
+                                                           sensArr[0][0],
+                                                           sensArr[0][1],
+                                                           sensArr[0][2],
+                                                           sensArr[1][0],
+                                                           sensArr[1][1],
+                                                           sensArr[1][2]))
+  print('      | R2: {0:5} {1:5} {2:5}   | R3: {3:5} {4:5} {5:5}   |'.format(
+                                                           sensArr[2][0],
+                                                           sensArr[2][1],
+                                                           sensArr[2][2],
+                                                           sensArr[3][0],
+                                                           sensArr[3][1],
+                                                           sensArr[3][2]))
 
-  print('      +-------------------------+-------------------------+')
+  print('      +=========================+=========================+')
   print('      |  In no particular Order:                          |')
   print('      +-------------------------+-------------------------+')
   print('      |  Found Locs             |  Actual Locs            |')  
   print('      +-------------------------+-------------------------+')
   print('      |  X       Y       Z      |  X       Y       Z      |')  
   print('      +=========================+=========================+')
-  for i in range(0, NUM_OBJECTS * 5):
+  for i in range(0, NUM_OBJECTS * EXTRA_FACTOR):
     print('   {} '.format(repr(i + 1).rjust(2)), end = '|\t')
     if(locs[i][2] == 0):
       print('\t\t\t|', end = '')
     else:
-      print('{}\t{}\t{}'.format(repr(round(locs[i][0], 3)), 
-                                repr(round(locs[i][1], 3)),
-                                repr(round(locs[i][2], 3))),
-                                end = '\t|')
+      print('{0:7} {1:7} {2:7}'.format(repr(round(locs[i][0], 3)), 
+                                       repr(round(locs[i][1], 3)),
+                                       repr(round(locs[i][2], 3))),
+                                       end = '\t|')
     if(objs[i][0] == 0) and objs[i][1] == 0 and objs[i][2] == 0:
       print('\t\t\t  |')
     else:
-      print(' {}\t  {}\t  {}\t  |'.format(repr(round(objs[i][0], 3)),
+      print(' {0:7} {1:7} {2:7} |'.format(repr(round(objs[i][0], 3)),
                                           repr(round(objs[i][1], 3)),
                                           repr(round(objs[i][2], 3))))
   print('      +-------------------------+-------------------------+')  

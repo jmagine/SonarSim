@@ -29,21 +29,27 @@ Running program:
 -------------------------------------------------------------------------------
 Changelog:
 -> V1.3
+   Object/Receiver Placement
+   -Receiver locations can be adjusted now
+   -Added third dimension
+
    T-shaped Array Resolution
    -Allows for 3D pinpointing of objects
-   -Aware that sometimes false positives appear, although for the most part
+   -Sometimes false positives appear, although for the most part
     objects are accurately detected.
+
+   TimeTable
    -Removed old/unused code used for generating time-tables or resolving
     single/multiple objects in 2D.
+
+   Driver
+   -Now displays receiver locations
+   -Added third dimension
+   -Adjustable extra memory for false positives without flowing out of bounds
 
 -> V1.2
    Ellipse Triangulation
    -Added support for a debugging mode for beautiful debugging output.
-   
-   Driver
-   -TODO will work on a way to distinguish objects from the floor of the pool
-    and generally determine positions in 3D space. May need input from previous
-    input as robot moves.
 
 -> V1.1
    Ellipse Triangulation
