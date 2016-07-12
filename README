@@ -24,10 +24,21 @@ Not dependent but I also remember adding the following on my Raspberry Pi:
     libraries. I did import from __future__ though so I think I'm using 2.7?
 -------------------------------------------------------------------------------
 Running program:
-   Place sonarSim1_3.py in current directory, type the command:
-        python sonarSim1_3.py
+   Place sonarSim1_4.py in current directory, type the command:
+        python sonarSim1_4.py
 -------------------------------------------------------------------------------
 Changelog:
+-> V1.4
+   Robot Movement
+   -TODO Realtime ping simulation
+   
+   Receiver Profiles
+   -TODO Beginning to add profile support for receiers, time extraction
+   -TODO Looks at average changes in power, assigns time at sharp increase in power.
+
+   Circle-Ellipse Intersections
+   -Improved efficiency, better debug prints
+
 -> V1.3
    Object/Receiver Placement
    -Receiver locations can be adjusted now
