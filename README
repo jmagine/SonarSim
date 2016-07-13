@@ -29,6 +29,9 @@ Running program:
 -------------------------------------------------------------------------------
 Changelog:
 -> V1.4
+   Driver
+   -Displays time used to calculate times and resolve objects
+
    Robot Movement
    -TODO Realtime ping simulation
    

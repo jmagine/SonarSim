@@ -12,6 +12,7 @@
 from __future__ import print_function
 from __future__ import division
 import numpy as np
+import time
 from math import pow
 
 #------------------------------------------------------------------------------
@@ -144,7 +145,7 @@ objs[11][1]   = 25
 objs[11][2]   = 50
 '''
 #DEBUG-------------------------------------------------------------------------
-INTER_ELL_DEBUG = 1
+INTER_ELL_DEBUG = 0
 CALC_TIME_DEBUG = 0
 
 #------------------------------------------------------------------------------
@@ -241,29 +242,29 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
   r2 = pow(time1 * SPEED_WAVE / 2, 2)
 
   '''[PART 1] Use time1 and time2 to come up with possible locations in 2D--'''
+  for ellipse in range(0, 3):
+    #calculate x locs for EOE EO1
+    ei[0][A] = sensArr[1][0] / 2
+    ei[0][B] = pow(time2 * SPEED_WAVE / 2, 2)
+    ei[0][C] = ei[0][B] - pow(ei[0][A], 2)
 
-  #calculate x locs for EOE EO1
-  ei[0][A] = sensArr[1][0] / 2
-  ei[0][B] = pow(time2 * SPEED_WAVE / 2, 2)
-  ei[0][C] = ei[0][B] - pow(ei[0][A], 2)
+    #calculate x locs of intersections
+    quada = 1 - ei[0][C] / ei[0][B]
+    quadb = 2 * ei[0][C] * ei[0][A] / ei[0][B]
+    quadc = ei[0][C] * (1 - pow(ei[0][A], 2) / ei[0][B]) - r2
 
-  #calculate x locs of intersections
-  quada = 1 - ei[0][C] / ei[0][B]
-  quadb = 2 * ei[0][C] * ei[0][A] / ei[0][B]
-  quadc = ei[0][C] * (1 - pow(ei[0][A], 2) / ei[0][B]) - r2
+    #intersects = CEIntersect(ei[0][A], ei[0][B], r2)
+    intersects = quadSolver(quada, quadb, quadc)
+    tempIntersect[0][0] = intersects[0]
+    tempIntersect[1][0] = intersects[1]
 
-  #intersects = CEIntersect(ei[0][A], ei[0][B], r2)
-  intersects = quadSolver(quada, quadb, quadc)
-  tempIntersect[0][0] = intersects[0]
-  tempIntersect[1][0] = intersects[1]
+    #calculate y^2 for any found xs
+    for i in range(0, 2):
+      ySqr[0][i % 2] = r2 - pow(tempIntersect[i][0], 2)
 
-  #calculate y^2 for any found xs
-  for i in range(0, 2):
-    ySqr[0][i % 2] = r2 - pow(tempIntersect[i][0], 2)
-
-    #check for invalid x or y locations
-    if (tempIntersect[i][0] != 0) and (ySqr[0][i % 2] >= 0):
-      tempIntersect[i][1] = pow(ySqr[0][i % 2], 1/2)
+      #check for invalid x or y locations
+      if (tempIntersect[i][0] != 0) and (ySqr[0][i % 2] >= 0):
+        tempIntersect[i][1] = pow(ySqr[0][i % 2], 1/2)
 
   '''[PART 2] Use third receiver to resolve for point-----------------------'''
 
@@ -437,9 +438,7 @@ def calcTime(xObj, yObj, zObj, xRcvr, yRcvr, zRcvr, exact, debug):
 Initializes time table, object times, and prints time table through delegation
 ----------------------------------------------------------------------------'''
 def driver():
-  #initTimeTable(xRegion, yRegion, xInc, yInc)
-
-  #print(timeTable) #DEBUG
+  start = time.time() * 1000
 
   #initialize objs array with times
   for obj in range(0, NUM_OBJECTS):
@@ -483,6 +482,8 @@ def driver():
               locs[i][2] = result[2]
               i = i + 1
   
+  end = time.time() * 1000
+  print('Time: ', start - end, 'ms')
   print('      +===================================================+')
   print('      |  E: {0:5} {1:5} {2:5}   | R1: {3:5} {4:5} {5:5}   |'.format(
                                                            sensArr[0][0],
