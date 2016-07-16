@@ -41,6 +41,7 @@ Changelog:
 
    Circle-Ellipse Intersections
    -Improved efficiency, better debug prints
+   -Got rid of redundant code
 
 -> V1.3
    Object/Receiver Placement
