@@ -145,7 +145,7 @@ objs[11][1]   = 25
 objs[11][2]   = 50
 '''
 #DEBUG-------------------------------------------------------------------------
-INTER_ELL_DEBUG = 0
+INTER_ELL_DEBUG = 1
 CALC_TIME_DEBUG = 0
 
 #------------------------------------------------------------------------------
@@ -175,39 +175,15 @@ b        - variable
 ----------------------------------------------------------------------------'''
 def CEIntersect(a, b, c):
   intersects = np.zeros((2))
-  d = pow(a, 2) * (pow(a, 4) - pow(a, 3) + b * (-1 * pow(a, 2) + a + c)) / pow(b, 2)
-  
+  d = pow(a, 2) * c / b
+
   if d < 0:
     return intersects
 
-  d = pow(d, 1/2)
-  intersects[0] = b * (d / pow(a, 2) - 1 / a) + a
-  intersects[1] = b * (-1 * d / pow(a, 2) - 1 / a) + a
-
+  d = b * pow(d, 1/2)
+  intersects[0] = (pow(a, 3) - d - a * b) / pow(a, 2)
+  intersects[1] = (pow(a, 3) + d - a * b) / pow(a, 2)
   return intersects
-
-'''quadSolver-[DEPRECATED]-----------------------------------------------------
-Solves quadratic equation
-
-a        - variable
-b        - variable
-c        - variable
-pluMin   - 0 for +
-           1 for -
-[return] - + or - solution based on input
-----------------------------------------------------------------------------'''
-def quadSolver(a, b, c):
-
-  if pow(b, 2) - 4 * a * c < 0 or a == 0:
-    return 0
-  
-  roots = np.zeros((2))
-
-  #print(-1 * b, '\t', pow(pow(b, 2) - 4 * a * c, 1/2), '\t', 2 * a)
-  roots[0] = (-1 * b + pow(pow(b, 2) - 4 * a * c, 1/2)) / (2 * a)
-  roots[1] = (-1 * b - pow(pow(b, 2) - 4 * a * c, 1/2)) / (2 * a)
-
-  return roots
 
 '''resolveTArray---------------------------------------------------------------
 Calculates object location in 3D using 4 receiver times.
@@ -231,6 +207,7 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
   B = 1
   C = 2
 
+  rcvr          = np.zeros((3, 2))
   circY         = np.zeros((2, 2))
   ySqr          = np.zeros((3, 2))
   intersects    = np.zeros((2))
@@ -241,109 +218,64 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
   #emitter radius squared
   r2 = pow(time1 * SPEED_WAVE / 2, 2)
 
-  '''[PART 1] Use time1 and time2 to come up with possible locations in 2D--'''
+  rcvr[0][0] = sensArr[1][0]
+  rcvr[1][0] = sensArr[2][0]
+  rcvr[2][0] = sensArr[3][2]
+
+  rcvr[0][1] = time2
+  rcvr[1][1] = time3
+  rcvr[2][1] = time4
+
   for ellipse in range(0, 3):
     #calculate x locs for EOE EO1
-    ei[0][A] = sensArr[1][0] / 2
-    ei[0][B] = pow(time2 * SPEED_WAVE / 2, 2)
-    ei[0][C] = ei[0][B] - pow(ei[0][A], 2)
+    ei[ellipse][A] = rcvr[ellipse][0] / 2
+    ei[ellipse][B] = pow(rcvr[ellipse][1] * SPEED_WAVE / 2, 2)
+    ei[ellipse][C] = ei[ellipse][B] - pow(ei[ellipse][A], 2)
 
     #calculate x locs of intersections
-    quada = 1 - ei[0][C] / ei[0][B]
-    quadb = 2 * ei[0][C] * ei[0][A] / ei[0][B]
-    quadc = ei[0][C] * (1 - pow(ei[0][A], 2) / ei[0][B]) - r2
-
-    #intersects = CEIntersect(ei[0][A], ei[0][B], r2)
-    intersects = quadSolver(quada, quadb, quadc)
-    tempIntersect[0][0] = intersects[0]
-    tempIntersect[1][0] = intersects[1]
+    intersects = CEIntersect(ei[ellipse][A], ei[ellipse][B], r2)
+    tempIntersect[ellipse * 2][0] = intersects[0]
+    tempIntersect[ellipse * 2 + 1][0] = intersects[1]
 
     #calculate y^2 for any found xs
     for i in range(0, 2):
-      ySqr[0][i % 2] = r2 - pow(tempIntersect[i][0], 2)
+      ySqr[ellipse][i % 2] = r2 - pow(tempIntersect[ellipse * 2 + i][0], 2)
 
       #check for invalid x or y locations
-      if (tempIntersect[i][0] != 0) and (ySqr[0][i % 2] >= 0):
-        tempIntersect[i][1] = pow(ySqr[0][i % 2], 1/2)
+      if (tempIntersect[ellipse * 2 + i][0] != 0) and (ySqr[ellipse][i % 2] >= 0):
+        tempIntersect[ellipse * 2 + i][1] = pow(ySqr[ellipse][i % 2], 1/2)
 
-  '''[PART 2] Use third receiver to resolve for point-----------------------'''
+    if ellipse == 1:
+      found = 0
+      #try all 4 possible intersection points with tolerance against 3rd ellipse
+      for i in range(0, 2):
+        for j in range(2, 4):
+          if tempIntersect[i][0] != 0:
+            if isInRange(tempIntersect[i][0] - tol, tempIntersect[i][0] + tol,
+                         tempIntersect[j][0]):
+              found = 1
+              result[0] = tempIntersect[i][0]
+              result[1] = tempIntersect[i][1]
+      
+      if found == 0:
+        break
+    elif ellipse == 2:
+      #circle circle intersections in 3D space
+      for i in range(4, 6):
+        if(tempIntersect[i][1] != 0):
+          circY[i % 2][0] = pow(result[1], 2) - pow(tempIntersect[i][0], 2)
+          circY[i % 2][1] = pow(tempIntersect[i][1], 2) - pow(result[0], 2)
+  
+          if circY[i % 2][0] < 0 or circY[i % 2][1] < 0:
+            continue
 
-  #calculate x locs for EOE EO1
-  ei[1][A] = sensArr[2][0] / 2
-  ei[1][B] = pow(time3 * SPEED_WAVE / 2, 2)
-  ei[1][C] = ei[1][B] - pow(ei[1][A], 2)
+          circY[i % 2][0] = pow(circY[i % 2][0], 1/2)
+          circY[i % 2][1] = pow(circY[i % 2][1], 1/2)
 
-  #calculate x locs of intersections
-  quada = 1 - ei[1][C] / ei[1][B]
-  quadb = 2 * ei[1][C] * ei[1][A] / ei[1][B]
-  quadc = ei[1][C] * (1 - pow(ei[1][A], 2) / ei[1][B]) - r2
-
-  #intersects = CEIntersect(ei[1][A], ei[1][B], r2)
-  intersects = quadSolver(quada, quadb, quadc)
-  tempIntersect[2][0] = intersects[0]
-  tempIntersect[3][0] = intersects[1]
+          if(isInRange(circY[i % 2][1] - tol, circY[i % 2][1] + tol, circY[i % 2][0])):
+            result[1] = (circY[i % 2][0] + circY[i % 2][1]) / 2
+            result[2] = tempIntersect[i][0]
  
-  #calculate y^2 for any found xs
-  for i in range(2, 4):
-    ySqr[1][i - 2] = r2 - pow(tempIntersect[i][0], 2)
-
-    #check for invalid x or y locations
-    if (tempIntersect[i][0] != 0) and (ySqr[1][i - 2] >= 0):
-      tempIntersect[i][1] = pow(ySqr[1][i - 2], 1/2)
-  
-  found = 0
-  #try all 4 possible intersection points with tolerance against 3rd ellipse
-  for i in range(0, 2):
-    for j in range(2, 4):
-      if tempIntersect[i][0] != 0:
-        if isInRange(tempIntersect[i][0] - tol, tempIntersect[i][0] + tol,
-                     tempIntersect[j][0]):
-          found = 1
-          result[0] = tempIntersect[i][0]
-          result[1] = tempIntersect[i][1]
-
-  '''[PART 3] Use fourth receiver for 3D resolution-------------------------'''
-  if found == 1:
-    #calculate z locs for EOE EO3
-    ei[2][A] = sensArr[3][2] / 2
-    ei[2][B] = pow(time4 * SPEED_WAVE / 2, 2)
-    ei[2][C] = ei[2][B] - pow(ei[2][A], 2)
-
-    #calculate x locs of intersections
-    quada = 1 - ei[2][C] / ei[2][B]
-    quadb = 2 * ei[2][C] * ei[2][A] / ei[2][B]
-    quadc = ei[2][C] * (1 - pow(ei[2][A], 2) / ei[2][B]) - r2
-
-    #intersects = CEIntersect(ei[2][A], ei[2][B], r2)
-    intersects = quadSolver(quada, quadb, quadc)
-    tempIntersect[4][0] = intersects[0]
-    tempIntersect[5][0] = intersects[1]
-
-    #calculate y^2 for any found xs
-    for i in range(4, 6):
-      ySqr[2][i - 4] = r2 - pow(tempIntersect[i][0], 2)
-  
-      #check for invalid x or y locations
-      if (tempIntersect[i][0] != 0) and (ySqr[2][i - 4] >= 0):
-        tempIntersect[i][1] = pow(ySqr[2][i - 4], 1/2)
-
-    #circle circle intersections in 3D space
-    for i in range(4, 6):
-      if(tempIntersect[i][1] != 0):
-        circY[i % 2][0] = pow(result[1], 2) - pow(tempIntersect[i][0], 2)
-        circY[i % 2][1] = pow(tempIntersect[i][1], 2) - pow(result[0], 2)
-  
-        if circY[i % 2][0] < 0 or circY[i % 2][1] < 0:
-          continue
-
-        circY[i % 2][0] = pow(circY[i % 2][0], 1/2)
-        circY[i % 2][1] = pow(circY[i % 2][1], 1/2)
-
-        if(isInRange(circY[i % 2][1] - tol, circY[i % 2][1] + tol, circY[i % 2][0])):
-          result[1] = (circY[i % 2][0] + circY[i % 2][1]) / 2
-          result[2] = tempIntersect[i][0]
-
-
   #DEBUG
   if debug:
     print('+=[DEBUG]===============================+======================================+')
@@ -354,12 +286,12 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
                                                       repr(round(time4, 5))))
     for i in range(0, 3):
       print('+-[Part{} EOE EO{}]-----------------------+--------------------------------------+'.format(i, i + 1))
-      print('|  ABC: {0:9} {1:9} {2:9}\t|'.format(repr(round(ei[0][A], 3)), 
-                                                  repr(round(ei[0][B], 3)), 
-                                                  repr(round(ei[0][C], 3))), 
+      print('|  ABC: {0:9} {1:9} {2:9}\t|'.format(repr(round(ei[i][A], 3)), 
+                                                  repr(round(ei[i][B], 3)), 
+                                                  repr(round(ei[i][C], 3))), 
                                                   end = '')
-      print(' XLocs: {0:9} {1:9}\t\t|'.format(repr(round(tempIntersect[0][0], 2)), 
-                                              repr(round(tempIntersect[1][0], 2))))
+      print(' XLocs: {0:9} {1:9}\t\t|'.format(repr(round(tempIntersect[i * 2][0], 2)), 
+                                              repr(round(tempIntersect[i * 2 + 1][0], 2))))
       for j in range(i * 2, (i + 1) * 2):
         if tempIntersect[j][0] == 0:
           print('| - X{}: no solution\t\t\t|\t\t\t\t\t|'.format(j + 1))
