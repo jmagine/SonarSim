@@ -398,22 +398,28 @@ def driver():
     for obj2 in range(0, NUM_OBJECTS):
       for obj3 in range(0, NUM_OBJECTS):
         for obj4 in range(0, NUM_OBJECTS):
+          if(sensArr[0][3 + obj1] == 0 or sensArr[1][3 + obj2] == 0 or 
+             sensArr[2][3 + obj3] == 0 or sensArr[3][3 + obj4] == 0):
+            continue
           result = resolveTArray(sensArr[0][3 + obj1], sensArr[1][3 + obj2],
                                  sensArr[2][3 + obj3], sensArr[3][3 + obj4],
                                  TOL_DIST, INTER_ELL_DEBUG)
           if(result[2] != 0):
-            match = 0
+            dup = 0
             for j in range(0, i):
               if(isInRange(locs[j][0] - TOL_OBJ, locs[j][0] + TOL_OBJ, result[0]) and
                  isInRange(locs[j][1] - TOL_OBJ, locs[j][1] + TOL_OBJ, result[1]) and
                  isInRange(locs[j][2] - TOL_OBJ, locs[j][2] + TOL_OBJ, result[2])):
-                match = 1
-            if match == 0:
-              locs[i][0] = result[0]
-              locs[i][1] = result[1]
-              locs[i][2] = result[2]
+                dup = 1
+            if dup == 0:
+              for k in range(0, 3):
+                locs[i][k] = result[k]
               i = i + 1
-  
+              sensArr[0][3 + obj1] = 0
+              sensArr[1][3 + obj2] = 0
+              sensArr[2][3 + obj3] = 0
+              sensArr[3][3 + obj4] = 0
+
   end = time.time() * 1000
   print('Time: ', end - start, 'ms')
   print('      +===================================================+')
