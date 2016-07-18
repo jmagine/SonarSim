@@ -9,8 +9,8 @@
                  receiver.
 ---*-----------------------------------------------------------------------*'''
 
-from __future__ import print_function
-from __future__ import division
+#from __future__ import print_function
+#from __future__ import division
 import numpy as np
 import time
 from math import pow
@@ -18,7 +18,15 @@ from math import pow
 #------------------------------------------------------------------------------
 #[RUN VARS]--------------------------------------------------------------------
 #------------------------------------------------------------------------------
+#TODO new, needs comments
+'''
+f = open('objects', 'r')
+count = 0
+for line in f:
+  count += 1
+'''
 
+#NUM_OBJECTS   = count      #num of objects
 NUM_OBJECTS   = 8          #num of objects
 SENS_NUM      = 4          #num of sensors
 SENS_SAMPLE   = 200000     #sensor sample rate
@@ -28,6 +36,19 @@ TOL_OBJ       = 0.25       #multiple object detection tolerance
 SPEED_WAVE    = 1482       #speed of sound in water
 EXTRA_FACTOR  = 2          #allocate space in case extra objects are found
 sensArr       = np.zeros((SENS_NUM, 3 + NUM_OBJECTS))
+objs          = np.zeros((NUM_OBJECTS * EXTRA_FACTOR, 3))
+
+#TODO new, needs comments
+'''
+for obj in range(0, NUM_OBJECTS):
+  location = [float(f) for f in split(f.readline())]
+  objs[obj][0] = 
+  objs[obj][1] = 
+  objs[obj][2] = 
+
+f.close()
+'''
+
   #sensArr[rcvr][0]  -> receiver x
   #sensArr[rcvr][1]  -> receiver y
   #sensArr[rcvr][2]  -> receiver z
@@ -49,7 +70,7 @@ sensArr[3][0] = 0
 sensArr[3][1] = 0
 sensArr[3][2] = .20
 
-objs          = np.zeros((NUM_OBJECTS * EXTRA_FACTOR, 3))
+
   #objs[object][0] -> object x
   #objs[object][1] -> object y
   #objs[object][2] -> object z
@@ -85,6 +106,7 @@ objs[6][2]    = -10
 objs[7][0]    = -20
 objs[7][1]    = 50
 objs[7][2]    = -10
+
 
 '''
 objs[0][0]    = 5
@@ -145,8 +167,8 @@ objs[11][1]   = 25
 objs[11][2]   = 50
 '''
 #DEBUG-------------------------------------------------------------------------
-INTER_ELL_DEBUG = 0
-CALC_TIME_DEBUG = 0
+INTER_ELL_DEBUG = 1
+CALC_TIME_DEBUG = 1
 
 #------------------------------------------------------------------------------
 #------------------------------------------------------------------------------
@@ -280,47 +302,47 @@ def resolveTArray(time1, time2, time3, time4, tol, debug):
   if debug:
     print('+=[DEBUG]===============================+======================================+')
     print('| resolveTArray      sonarSim 1.4       ', end = '')
-    print('| Data: {0:7} {1:7} {2:7} {3:7}\t|'.format(repr(round(time1, 5)), 
-                                                      repr(round(time2, 5)), 
-                                                      repr(round(time3, 5)), 
-                                                      repr(round(time4, 5))))
+    print('| Data: {0:7.5f} {1:7.5f} {2:7.5f} {3:7.5f}\t|'.format(time1, 
+                                                                  time2, 
+                                                                  time3, 
+                                                                  time4))
     for i in range(0, 3):
       print('+-[Part{} EOE EO{}]-----------------------+--------------------------------------+'.format(i, i + 1))
-      print('|  ABC: {0:9} {1:9} {2:9}\t|'.format(repr(round(ei[i][A], 3)), 
-                                                  repr(round(ei[i][B], 3)), 
-                                                  repr(round(ei[i][C], 3))), 
+      print('|  ABC: {0:9.3f} {1:9.3f} {2:9.3f}\t|'.format(ei[i][A], 
+                                                          ei[i][B], 
+                                                          ei[i][C]), 
                                                   end = '')
-      print(' XLocs: {0:9} {1:9}\t\t|'.format(repr(round(tempIntersect[i * 2][0], 2)), 
-                                              repr(round(tempIntersect[i * 2 + 1][0], 2))))
+      print(' XLocs: {0:9.2f} {1:9.2f}\t\t|'.format(tempIntersect[i * 2][0], 
+                                                  tempIntersect[i * 2 + 1][0]))
       for j in range(i * 2, (i + 1) * 2):
         if tempIntersect[j][0] == 0:
           print('| - X{}: no solution\t\t\t|\t\t\t\t\t|'.format(j + 1))
         elif tempIntersect[j][1] == 0:
-          print('| - Y{0:}: undef sqrt({1:18})\t|\t\t\t\t\t|'.format(j + 1,
-          repr(round(ySqr[0][j % 2], 3))))
+          print('| - Y{0:}: undef sqrt({1:18.3f})\t|\t\t\t\t\t|'.format(j + 1,
+                                                               ySqr[0][j % 2]))
         else:
-          print('| + X{0:}: {1:8}\t\t\t| Y{0:}: {2:8}\t\t\t\t|'.format(j + 1,
-                                            repr(round(tempIntersect[j][0], 3)), 
-                                            repr(round(tempIntersect[j][1], 3))))
+          print('| + X{0:}: {1:8.3f}\t\t\t| Y{0:}: {2:8.3f}\t\t\t\t|'.format(j + 1,
+                                                          tempIntersect[j][0], 
+                                                          tempIntersect[j][1]))
     print('+---------------------------------------+--------------------------------------+'.format(i, i + 1))
     if found:
-      print('| +  X: {0:10} Y: {1:10}\t\t\t\t\t\t|'.format(repr(round(result[0], 3)), 
-                                                    repr(round(result[1], 3))))
+      print('| +  X: {0:10.3f} Y: {1:10.3f}\t\t\t\t\t\t\t|'.format(result[0], 
+                                                               result[1]))
       for i in range(0, 2):
         if circY[i][0] < 0 or circY[i][1] < 0:
           print('| - invalid Y1 or Y2\t\t\t\t\t\t\t\t|')
         elif circY[i][0] == 0 and circY[i][1] == 0:
           print('| - no Y\t\t\t\t\t\t\t\t\t|')
         elif result[2] != 0:
-          print('| + Y1: {0:10} Y2: {1:10}\t> X: {2:8} Y: {3:8} Z: {4:8}\t|'.format(
-                                                 repr(round(circY[i][0], 3)),
-                                                 repr(round(circY[i][1], 3)),
-                                                 repr(round(result[0], 3)),
-                                                 repr(round(result[1], 3)),
-                                                 repr(round(result[2], 3))))
+          print('| + Y1: {0:10.3f} Y2: {1:10.3f}\t> X: {2:8.3f} Y: {3:8.3f} Z:{4:8.3f}\t|'.format(
+                                                                   circY[i][0],
+                                                                   circY[i][1],
+                                                                   result[0],
+                                                                   result[1],
+                                                                   result[2]))
         else:
-          print('| - Y1: {0:10} Y2: {1:10}\t\t\t\t\t\t|'.format(repr(round(circY[i][0], 3)),
-                                                 repr(round(circY[i][1], 3))))
+          print('| - Y1: {0:10.3f} Y2: {1:10.3f}\t\t\t\t\t\t|'.format(circY[i][0],
+                                                                  circY[i][1]))
     print('+=======================================+======================================+\n')
   
   return result
@@ -348,19 +370,9 @@ def calcTime(xObj, yObj, zObj, xRcvr, yRcvr, zRcvr, exact, debug):
 
   
   if debug:
-    print('DEBUG - CT -',
-          repr(round(xObj           , 2)).rjust(4), 
-          repr(round(yObj           , 2)).rjust(4),
-          repr(round(zObj           , 2)).rjust(4),
-          repr(round(xRcvr          , 2)).rjust(4),
-          repr(round(yRcvr          , 2)).rjust(4),
-          repr(round(zRcvr          , 2)).rjust(4),
-          repr(round(distEmitterObj , 5)).rjust(7),
-          repr(round(distObjReceiver, 5)).rjust(7),
-          repr(round(totalDist      , 5)).rjust(7),
-          repr(round(totalTime      , 5)).rjust(7),
-          end = '\n')
-  
+    print('DEBUG - CT -{0:4.2f} {1:4.2f} {2:4.2f} {3:4.2f} {4:4.2f} {5:4.2f} {6:7.4f} {7:7.4f} {8:7.4f} {9:7.4f}'.format(
+          xObj, yObj, zObj, xRcvr, yRcvr, zRcvr, 
+          distEmitterObj, distObjReceiver, totalDist, totalTime))
   if(exact):
     return totalTime
   else:
@@ -450,16 +462,16 @@ def driver():
     if(locs[i][2] == 0):
       print('\t\t\t|', end = '')
     else:
-      print('{0:7} {1:7} {2:7}'.format(repr(round(locs[i][0], 3)), 
-                                       repr(round(locs[i][1], 3)),
-                                       repr(round(locs[i][2], 3))),
-                                       end = '\t|')
+      print('{0:7.3f} {1:7.3f} {2:7.3f}'.format(locs[i][0], 
+                                                locs[i][1],
+                                                locs[i][2]),
+                                        end = '\t|')
     if(objs[i][0] == 0) and objs[i][1] == 0 and objs[i][2] == 0:
       print('\t\t\t  |')
     else:
-      print(' {0:7} {1:7} {2:7} |'.format(repr(round(objs[i][0], 3)),
-                                          repr(round(objs[i][1], 3)),
-                                          repr(round(objs[i][2], 3))))
+      print(' {0:7.3f} {1:7.3f} {2:7.3f} |'.format(objs[i][0],
+                                                   objs[i][1],
+                                                   objs[i][2]))
   print('      +-------------------------+-------------------------+')  
 
 driver()
