@@ -11,21 +11,11 @@ object locations given receiver locations.
 -------------------------------------------------------------------------------
 Dependencies:
    -Numpy
-   -Python 2.7 (probably easily modifyable for 3.x since I use the print
-                function pretty heavily. Also likely won't be printing much
-		in final version, mostly for debugging)
-   
-Not dependent but I also remember adding the following on my Raspberry Pi:
-   -git
-   -gvim
-   -vim
-   -I think python 3.4 is also on my pi? Dunno which version my program really
-    uses since I appear to have both 2.7 and 3.4 as well as compatibility
-    libraries. I did import from __future__ though so I think I'm using 2.7?
+   -Python3 
 -------------------------------------------------------------------------------
 Running program:
    Place sonarSim1_4.py in current directory, type the command:
-        python sonarSim1_4.py
+      python sonarSim1_4.py
 -------------------------------------------------------------------------------
 Changelog:
 -> V1.4
@@ -37,7 +27,8 @@ Changelog:
    
    Receiver Profiles
    -TODO Beginning to add profile support for receiers, time extraction
-   -TODO Looks at average changes in power, assigns time at sharp increase in power.
+   -TODO Looks at average changes in power, assigns time at sharp increase in 
+    power.
 
    Circle-Ellipse Intersections
    -Improved efficiency, better debug prints
