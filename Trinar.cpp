@@ -14,9 +14,8 @@
 #include "SensorTArray.h"
 #include "util.h"
 
-using namespace std;
-
-
+using std::cout;
+using std::endl;
 
 bool Trinar::CEIntersect(double a, double b, double c, double result[2]) {
   double d = pow(a, 2) * c / b;

@@ -14,7 +14,8 @@
 #include "SensorTArray.h"
 #include "util.h"
 
-using namespace std;
+using std::cout;
+using std::endl;
 
 #define NUM_OBJECTS 8
 #define EXTRA_FACTOR 2
@@ -31,6 +32,7 @@ int main(int argc, char * argv[]) {
   SensorTArray sensors(-0.15, 0.25, 0.2, 200000);
   Timer timer;
   
+  //TODO this is disgusting
   objActualLocs[0][0]    = -1;
   objActualLocs[0][1]    = 10;
   objActualLocs[0][2]    = 0;

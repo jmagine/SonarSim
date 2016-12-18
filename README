@@ -9,15 +9,40 @@ Generates realistic hydrophone receiver times given specified multiple object
 placement. This allows for testing of algorithms and visualization of possible
 object locations given receiver locations.
 -------------------------------------------------------------------------------
-Dependencies:
+C++ version:
+   -g++ compiler with c++11 standard
+
+Python version Dependencies:
    -Numpy
    -Python3 
 -------------------------------------------------------------------------------
 Running program:
+
    Place sonarSim1_4.py in current directory, type the command:
-      python sonarSim1_4.py
+      python3 sonarSim1_4.py
 -------------------------------------------------------------------------------
 Changelog:
+
+-> V1.5
+   sonarSim
+   -Runs simulation, does everything 1.4 does except does not run resolution
+    algorithm on impossible sets of times. This is calculated by looking at the
+    biggest difference two times can have based on their receiver positioning.
+
+   SensorTArray
+   -Object which contains information about receiver positioning as well as 
+    environment variables.
+
+   Trinar
+   -Contains ellipse triangulation functions for calculating positions of
+    objects as well as exact/simulated times given an object and SensorTArray. 
+
+   util
+   -Contains timer and range check functions for ease of use.
+   
+--- C++    versions above ---
+--- Python Versions below ---
+
 -> V1.4
    Driver
    -Displays time used to calculate times and resolve objects
