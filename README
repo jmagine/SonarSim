@@ -9,7 +9,7 @@ Generates realistic hydrophone receiver times given specified multiple object
 placement. This allows for testing of algorithms and visualization of possible
 object locations given receiver locations.
 -------------------------------------------------------------------------------
-C++ version:
+C++ version works with:
    -g++ compiler with c++11 standard
 
 Python version Dependencies:
@@ -17,7 +17,12 @@ Python version Dependencies:
    -Python3 
 -------------------------------------------------------------------------------
 Running program:
+   C++:
+   Ensure all files are in your current directory, then type the commands:
+   make
+   ./sonarSim
 
+   Python:
    Place sonarSim1_4.py in current directory, type the command:
       python3 sonarSim1_4.py
 -------------------------------------------------------------------------------
