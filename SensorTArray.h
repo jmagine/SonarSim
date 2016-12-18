@@ -5,7 +5,8 @@
                                       sonarSim
 
  File Name:       SensorTArray.h
- Description:     TODO
+ Description:     Contains information about receiver positioning as well as 
+                  environment variables.
  *****************************************************************************/
 
 #ifndef SENSORTARRAY_H

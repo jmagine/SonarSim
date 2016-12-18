@@ -2,11 +2,11 @@
 
                                                          Author: Jason Ma
                                                          Date:   Dec 15 2016
-                                      TODO
+                                      sonarSim
 
  File Name:       SensorTArray.cpp
- Description:     TODO
- Sources of help: TODO
+ Description:     Contains information about receiver positioning as well as
+                  environment variables.
  *****************************************************************************/
 
 #include "SensorTArray.h"

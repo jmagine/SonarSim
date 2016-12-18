@@ -2,11 +2,10 @@
 
                                                          Author: Jason Ma
                                                          Date:   Dec 17 2016
-                                      TODO
+                                      sonarSim
 
  File Name:       util.h
- Description:     TODO
- Sources of help: TODO
+ Description:     Contains timer and range check functions for ease of use
  *****************************************************************************/
 
 #include <chrono>
@@ -17,17 +16,9 @@ class Timer{
 
   public:
 
-    /*
-     * Function called when starting the timer.
-     */
     void start();
 
-    /*
-     * Function called when ending the timer. Returns duration in nanoseconds
-     * PRECONDITION: begin_timer() must be called before this function
-     */
     long long end();
-
 
 };
 
