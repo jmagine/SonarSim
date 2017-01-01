@@ -28,6 +28,13 @@ Running program:
 -------------------------------------------------------------------------------
 Changelog:
 
+-> V1.6
+   sonarSim
+   -Now can run simulation on randomly placed objects, so it is possible to see
+    how well the algorithm performs on a large set of objects. Added framework
+    for running the program in different modes for testing smaller components
+    of the overall program.
+
 -> V1.5
    sonarSim
    -Runs simulation, does everything 1.4 does except does not run resolution
