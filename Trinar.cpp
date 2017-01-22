@@ -11,6 +11,7 @@
  *****************************************************************************/
 
 #include <iostream>
+#include <iomanip>
 #include <cmath>
 #include "Trinar.h"
 #include "SensorTArray.h"
@@ -18,6 +19,7 @@
 
 using std::cout;
 using std::endl;
+using std::setw;
 
  /********************************************************************
  | Routine Name: CEIntersect
@@ -176,7 +178,59 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
   
   if(debug) {
     //TODO print debug statements
-    cout << "DEBUG - resolveTArray" << endl;
+    cout << "+=[DEBUG]===============================+=======================================+" << endl;
+    cout << "| resolveTArray      sonarSim 1.4       ";
+    cout << "| " << setw(7) << t1 << " " << 
+                    setw(7) << t2 << " " << 
+                    setw(7) << t3 << " " << 
+                    setw(7) << t4 << "\t|" << endl;
+    for(i = 0; i < 3; i++) {
+      cout << "+-[Part" << i << " EOE EO" << i + 1 << "]-----------------------+---------------------------------------+" << endl;
+      cout << "|  ABC: " << setw(9) << ei[i][0] << " " <<
+                           setw(9) << ei[i][1] << " " <<
+                           setw(9) << ei[i][2] << "\t|";
+      cout << " XLocs: " << setw(9) << tempIntersect[i * 2][0] << " " <<
+                            setw(9) << tempIntersect[i * 2 + 1][0] << "\t\t|" << endl;
+      
+      for(j = i * 2; j < (i + 1) * 2; j++) {
+        if(tempIntersect[j][0] == 0)
+          cout << "| - X" << j + 1 << ": no solution\t\t\t|\t\t\t\t\t|" << endl;
+        else if(tempIntersect[j][1] == 0)
+          cout << "| - Y" << j + 1 << ": undef sqrt(" << setw(18) << ySqr[0][j % 2] << ")\t|\t\t\t\t\t|" << endl;
+        else
+          cout << "| + X" << j + 1 << ": " << setw(8) << tempIntersect[j][0] << 
+              "\t\t\t| Y" << j + 1 << ": " << setw(8) << tempIntersect[j][1] << "\t\t\t\t|" << endl;
+      }
+    }
+
+    cout << "+---------------------------------------+---------------------------------------+" << endl;
+
+    if(resultFound) {
+      cout << "| +  X: " << setw(10) << result[0] << " Y: " << setw(10) << result[1] << "\t\t\t\t\t\t|" << endl;
+
+      for(i = 0; i < 2; i++) {
+        if(circY[i][0] < 0 || circY[i][1] < 0)
+          cout << "| - invalid Y1 or Y2\t\t\t\t\t\t\t\t|" << endl;
+        else if(circY[i][0] == 0 && circY[i][1] == 0)
+          cout << "| - no Y\t\t\t\t\t\t\t\t\t|" << endl;
+        else if(result[2] != 0)
+          cout << "| + Y1: " << setw(10) << circY[i][0] << 
+            " Y2: " << setw(10) << circY[i][1] <<
+            "\t> X: " << setw(8) << result[0] <<
+            " Y: " << setw(8) << result[1] <<
+            " Z: " << setw(8) << result[2] << 
+            "\t| " << endl;
+        else
+          cout << "| - Y1: " << setw(10) << circY[i][0] <<
+            " Y2: " << setw(10) << circY[i][1] <<
+            "\t\t\t\t\t\t|" << endl;
+
+
+      }
+    }
+    
+    cout << endl << endl;
+    //cout << "DEBUG - resolveTArray" << endl;
   }
 
   return resultFound;

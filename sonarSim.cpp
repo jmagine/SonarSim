@@ -170,10 +170,10 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   cout << "DEBUG - Printing times" << endl;
   //TODO debug
   for(i = 0; i < numObjects; i++) {
-    cout << j << ": ";
+    cout << i << ": ";
 
     for(j = 0; j < 4; j++) {
-      cout << times[i][j];
+      cout << setw(10) << times[i][j] << " ";
     }
     cout << endl;
   }
@@ -206,10 +206,10 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   cout << "DEBUG - Printing sorted times" << endl;
   //TODO debug
   for(i = 0; i < numObjects; i++) {
-    cout << j << ": ";
+    cout << i << ": ";
 
     for(j = 0; j < 4; j++) {
-      cout << times[i][j];
+      cout << setw(10) << times[i][j] << " ";
     }
     cout << endl;
   }
@@ -264,7 +264,7 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
 
           successful = Trinar::resolveTArray(times[obj1][0], times[obj2][1], 
               times[obj3][2], times[obj4][3], sensors, objPredLocs[i], 
-              TOL_DIST, false);
+              TOL_DIST, true);
           runCount++;
 
           if(successful) {
@@ -297,27 +297,35 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   }
 
   benchTime = timer.end();
+
+  //TODO sort found positions to correspond to actual positions if possible
+  //need to account for both when actual < found and actual > found
   
-  cout << "--- Detection Accuracy Simulation Results ---" << endl;
-  cout << "Rcvr time closeness bounds: " << setw(10) << timeTol01 << " " <<
-                                            setw(10) << timeTol02 << " " <<
-                                            setw(10) << timeTol03 << endl;
+  cout << "===== Detection Accuracy Simulation Results =====" << endl;
+  cout << "Rcvr min time diffs: " << setw(7) << timeTol01 << " " <<
+                                            setw(7) << timeTol02 << " " <<
+                                            setw(7) << timeTol03 << endl;
   cout << "Time : " << benchTime / 1000000.0 << " ms" << endl;
   cout << "Runs : " << runCount << endl;
-  cout << "Found: " << found << endl;    
-  cout << "---------------------------------------------" << endl;
-  cout << "Actual positions:" << endl;
-  for(i = 0; i < numObjects; i++) {
-    cout << i << ": " << objActualLocs[i][0] << " " << objActualLocs[i][1] << " " << objActualLocs[i][2] << endl;
-  }
-  cout << "---------------------------------------------" << endl;
-  cout << "Found positions:" << endl;
-  for(obj = 0; obj < found; obj++) {
-    cout << obj << ": " << setw(10) << objPredLocs[obj][0] << " " <<
-            setw(10) << objPredLocs[obj][1] << " " <<
-            setw(10) << objPredLocs[obj][2] << endl;
-  }
+  cout << "Found: " << found << endl;
 
+  cout << "-------------------------------------------------" << endl;
+  cout << "    Actual positions    |    Found positions     " << endl;
+  cout << "-------------------------------------------------" << endl;
+  for(i = 0; i < numObjects; i++) {
+    cout << i << ": " << setw(3) << objActualLocs[i][0] << " " << 
+                         setw(3) << objActualLocs[i][1] << " " << 
+                         setw(3) << objActualLocs[i][2] << " | ";
+
+    if(i < found) {
+      cout << setw(10) << objPredLocs[i][0] << " " <<
+              setw(10) << objPredLocs[i][1] << " " <<
+              setw(10) << objPredLocs[i][2] << endl;
+    }
+    else
+      cout << endl;
+  }
+  cout << "-------------------------------------------------" << endl;
   cout << endl;
 
 }
