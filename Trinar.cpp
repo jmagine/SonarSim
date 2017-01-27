@@ -87,7 +87,7 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
   bool found;
   bool resultFound;
 
-  r2 = pow(t1 * SPEED_WAVE / 2, 2);
+  r2 = pow(t1 * SPEED_WAVE / 2.0, 2);
 
   rcvr[0][0] = sensors.sensArr[1][0];
   rcvr[1][0] = sensors.sensArr[2][0];
@@ -103,6 +103,15 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
 
   resultFound = false;
 
+  for(i = 0; i < 6; i++) {
+    tempIntersect[i][0] = 0;
+    tempIntersect[i][1] = 0;
+  }
+ 
+  for(i = 0; i < 3; i++) {
+    ySqr[i][0] = 0;
+    ySqr[i][1] = 0;
+  }
   //perform 3 ellipse circle intersections - r2, r3, and r4 intersected with r1
 
   for(ellipse = 0; ellipse < 3; ellipse++) {
@@ -127,6 +136,7 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
         if((tempIntersect[ellipse * 2 + i][0] != 0) && (ySqr[ellipse][i % 2] >= 0)) {
           tempIntersect[ellipse * 2 + i][1] = sqrt(ySqr[ellipse][i % 2]);
         }
+
       }
 
       //when 2 ellipse intersections have been calculated, attempt to resolve
@@ -134,15 +144,23 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
       if(ellipse == 1) {
         found = false;
 
-        for(i = 0; i < 2; i++)
-          for(j = 2; j < 4; j++)
+        for(i = 0; i < 2; i++) {
+          for(j = 2; j < 4; j++) {
+            //cout << tempIntersect[i][0] << " " << tempIntersect[j][0] << endl;
             if(tempIntersect[i][0] != 0 && isInRange(tempIntersect[i][0] - tol, tempIntersect[i][0] + tol,
                            tempIntersect[j][0])) {
               found = true;
+              
               result[0] = tempIntersect[i][0];
               result[1] = tempIntersect[i][1];
+              //cout << "result Y: " << tempIntersect[i][1] << endl;
+              //experimental: take average of found xs and ys
+              //result[0] = (tempIntersect[i][0] + tempIntersect[j][0]) / 2.0;
+              //result[1] = (tempIntersect[i][1] + tempIntersect[j][1]) / 2.0;              
               
             }
+          }
+        }
 
         //end computation early if nothing is found
         if(!found)
@@ -151,11 +169,11 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
       //do circle circle intersections to resolve for point in 3D space.
       else if(ellipse == 2) {
 
+        //TODO figure out what is going on with y2. it looks like always takes y from original circle
         for(i = 4; i < 6; i++) {
           if(tempIntersect[i][1] != 0) {
             circY[i % 2][0] = pow(result[1], 2) - pow(tempIntersect[i][0], 2);
             circY[i % 2][1] = pow(tempIntersect[i][1], 2) - pow(result[0], 2);
-
             if(circY[i % 2][0] < 0 || circY[i % 2][1] < 0)
               continue;
 
@@ -185,13 +203,17 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
                     setw(7) << t3 << " " << 
                     setw(7) << t4 << "\t|" << endl;
     for(i = 0; i < 3; i++) {
+
+      if(!resultFound && i == 2)
+        break;
+
       cout << "+-[Part" << i << " EOE EO" << i + 1 << "]-----------------------+---------------------------------------+" << endl;
       cout << "|  ABC: " << setw(9) << ei[i][0] << " " <<
-                           setw(9) << ei[i][1] << " " <<
-                           setw(9) << ei[i][2] << "\t|";
+        setw(9) << ei[i][1] << " " <<
+        setw(9) << ei[i][2] << "\t|";
       cout << " XLocs: " << setw(9) << tempIntersect[i * 2][0] << " " <<
-                            setw(9) << tempIntersect[i * 2 + 1][0] << "\t\t|" << endl;
-      
+        setw(9) << tempIntersect[i * 2 + 1][0] << "\t\t|" << endl;
+
       for(j = i * 2; j < (i + 1) * 2; j++) {
         if(tempIntersect[j][0] == 0)
           cout << "| - X" << j + 1 << ": no solution\t\t\t|\t\t\t\t\t|" << endl;
@@ -199,7 +221,7 @@ bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTAr
           cout << "| - Y" << j + 1 << ": undef sqrt(" << setw(18) << ySqr[0][j % 2] << ")\t|\t\t\t\t\t|" << endl;
         else
           cout << "| + X" << j + 1 << ": " << setw(8) << tempIntersect[j][0] << 
-              "\t\t\t| Y" << j + 1 << ": " << setw(8) << tempIntersect[j][1] << "\t\t\t\t|" << endl;
+            "\t\t\t| Y" << j + 1 << ": " << setw(8) << tempIntersect[j][1] << "\t\t\t\t|" << endl;
       }
     }
 
