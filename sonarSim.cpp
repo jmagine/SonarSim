@@ -43,7 +43,8 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects);
  | return             0 on successful run
  ********************************************************************/
 int main(int argc, char * argv[]) {
-  //SensorTArray sensors(-0.15, 0.25, 0.2, 200000);  
+
+  //SensorTArray sensors(-0.15, 0.25, 0.2, 200000); 
   SensorTArray sensors(-0.3, 0.5, 0.4, 2000000);
   string input = "";
 
