@@ -75,37 +75,37 @@ sensArr[3][2] = .20
   #objs[object][1] -> object y
   #objs[object][2] -> object z
 
-objs[0][0]    = -1
-objs[0][1]    = 10
-objs[0][2]    = 0
+objs[0][0]    = 33
+objs[0][1]    = 36
+objs[0][2]    = 27
 
-objs[1][0]    = -3
-objs[1][1]    = 10
-objs[1][2]    = 0
+objs[1][0]    = -35
+objs[1][1]    = 43
+objs[1][2]    = -15
 
-objs[2][0]    = -5
-objs[2][1]    = 20
-objs[2][2]    = -7
+objs[2][0]    = 36
+objs[2][1]    = 42
+objs[2][2]    = -1
 
-objs[3][0]    = -4
-objs[3][1]    = 21
-objs[3][2]    = -6.8
+objs[3][0]    = -29
+objs[3][1]    = 12
+objs[3][2]    = -23
 
-objs[4][0]    = -3
-objs[4][1]    = 22
-objs[4][2]    = -6.9
+objs[4][0]    = 40
+objs[4][1]    = 9
+objs[4][2]    = 13
 
-objs[5][0]    = -10
-objs[5][1]    = 30
-objs[5][2]    = -4
+objs[5][0]    = -24
+objs[5][1]    = 40
+objs[5][2]    = -24
 
-objs[6][0]    = -20
-objs[6][1]    = 25
-objs[6][2]    = -10
+objs[6][0]    = 22
+objs[6][1]    = 36
+objs[6][2]    = -39
 
-objs[7][0]    = -20
-objs[7][1]    = 50
-objs[7][2]    = -10
+objs[7][0]    = 18
+objs[7][1]    = 17
+objs[7][2]    = -21
 
 
 '''
