@@ -170,7 +170,7 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   cout << "DEBUG - Printing times" << endl;
   //TODO debug
   for(i = 0; i < numObjects; i++) {
-    cout << j << ": ";
+    cout << i << ": ";
 
     for(j = 0; j < 4; j++) {
       cout << times[i][j];
@@ -206,7 +206,7 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   cout << "DEBUG - Printing sorted times" << endl;
   //TODO debug
   for(i = 0; i < numObjects; i++) {
-    cout << j << ": ";
+    cout << i << ": ";
 
     for(j = 0; j < 4; j++) {
       cout << times[i][j];
