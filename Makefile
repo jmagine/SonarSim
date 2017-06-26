@@ -12,10 +12,15 @@ endif
 OBJS = sonarSim.cpp util.cpp Trinar.cpp SensorTArray.cpp
 
 OBJ_NAME = sonarSim
+#sonarSimSDL: sonarSimSDL.cpp util.o Trinar.o SensorTArray.o Display.o
+
+#util.o: util.h
 
 all : $(OBJS)
 	g++ $(OBJS) $(COMPILER_FLAGS) -o $(OBJ_NAME)
 #$(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
+
+Display.o: Display.h
 
 clean:
 	$(RM) sonarSim.exe *.o core*/

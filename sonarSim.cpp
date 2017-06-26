@@ -43,7 +43,8 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects);
  | return             0 on successful run
  ********************************************************************/
 int main(int argc, char * argv[]) {
-  //SensorTArray sensors(-0.15, 0.25, 0.2, 200000);  
+
+  //SensorTArray sensors(-0.15, 0.25, 0.2, 200000); 
   SensorTArray sensors(-0.3, 0.5, 0.4, 2000000);
   string input = "";
 
@@ -265,13 +266,95 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   for(i = 0; i < numObjects; i++) {
     cout << i << ": ";
     for(j = 0; j < 4; j++) {
-      cout << times[i][j] << " ";
+      cout << setw(7) << times[i][j] << " ";
     }
     cout << endl; 
   }
 
   //TODO sort found positions to correspond to actual positions if possible
   //need to account for both when actual < found and actual > found
+  
+  double min[3];
+  
+  int minInd;
+
+  //sort actual locs first
+  for(i = 0; i < numObjects; i++) {
+
+    min[0] = 1000;
+    min[1] = 1000;
+    min[2] = 1000;
+
+    minInd = -1;
+    
+    for(j = i; j < numObjects; j++) {
+      if(objActualLocs[j][0] < min[0]) {
+        min[0] = objActualLocs[j][0];
+        min[1] = objActualLocs[j][1];
+        min[2] = objActualLocs[j][2];
+        minInd = j;
+      }
+      else if(objActualLocs[j][0] == min[0]) {
+        if(objActualLocs[j][1] < min[1]) {
+          min[1] = objActualLocs[j][1];
+          min[2] = objActualLocs[j][2];
+          minInd = j;
+        }
+        else if(objActualLocs[j][1] == min[1]) {
+          if(objActualLocs[j][2] < min[2]) {
+            min[2] = objActualLocs[j][2];
+            minInd = j;
+          }
+        }
+      }
+    }
+    if(minInd != -1) {
+      for(k = 0; k < 3; k++) {
+        objActualLocs[minInd][k] = objActualLocs[i][k];
+        objActualLocs[i][k] = min[k];
+      }
+    }
+  }
+
+  //sort pred locs
+  for(i = 0; i < found; i++) {
+
+    min[0] = 1000;
+    min[1] = 1000;
+    min[2] = 1000;
+
+    minInd = -1;
+    
+    for(j = i; j < found; j++) {
+      if(objPredLocs[j][0] < min[0]) {
+        min[0] = objPredLocs[j][0];
+        min[1] = objPredLocs[j][1];
+        min[2] = objPredLocs[j][2];
+        minInd = j;
+      }
+      else if(objPredLocs[j][0] == min[0]) {
+        if(objPredLocs[j][1] < min[1]) {
+          min[1] = objPredLocs[j][1];
+          min[2] = objPredLocs[j][2];
+          minInd = j;
+        }
+        else if(objPredLocs[j][1] == min[1]) {
+          if(objPredLocs[j][2] < min[2]) {
+            min[2] = objPredLocs[j][2];
+            minInd = j;
+          }
+        }
+      }
+    }
+    if(minInd != -1) {
+      for(k = 0; k < 3; k++) {
+        objPredLocs[minInd][k] = objPredLocs[i][k];
+        objPredLocs[i][k] = min[k];
+      }
+    }
+  }
+
+
 
   cout << "-------------------------------------------------" << endl;
   cout << "    Actual positions    |    Found positions     " << endl;

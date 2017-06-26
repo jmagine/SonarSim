@@ -74,11 +74,11 @@ bool Trinar::CEIntersect(double a, double b, double c, double result[2]) {
  ********************************************************************/
 bool Trinar::resolveTArray(double t1, double t2, double t3, double t4, SensorTArray sensors, double result[3], double tol, bool debug) {
 
-  double tempIntersect[6][2] = {0};
-  double ei[3][3] = {0};
-  double rcvr[3][2] = {0};
-  double ySqr[3][2] = {0};
-  double circY[2][2] = {0};  
+  double tempIntersect[6][2] = {{0}};
+  double ei[3][3] = {{0}};
+  double rcvr[3][2] = {{0}};
+  double ySqr[3][2] = {{0}};
+  double circY[2][2] = {{0}};  
   double intersects[2] = {0};
   double r2;
   int ellipse;
