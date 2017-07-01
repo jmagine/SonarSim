@@ -1,0 +1,320 @@
+ /*****************************************************************************
+
+                                                         Author: Jason Ma
+                                                         Date:   Jul 01 2017
+                                      sonarSim
+
+ File Name:       main.cpp
+ Description:     Runs sonar model while interfacing with DSM.
+ *****************************************************************************/
+
+#include <iostream>
+#include <iomanip>
+#include <cstdlib>
+#include "Trinar.h"
+#include "SensorTArray.h"
+#include "util.h"
+
+using std::cout;
+using std::endl;
+using std::setw;
+using std::rand;
+
+#define EXTRA_FACTOR 2
+
+void detectionAccuracySimulation(SensorTArray sensors, int numObjects);
+
+int main(int argc, char * argv[]) {
+  SensorTArray sensors(-0.3, 0.5, 0.4, 200000);
+  detectionAccuracySimulation(sensors, 100);
+
+  return 0;
+}
+
+ /********************************************************************
+ | Routine Name: detectionAccuracySimulation
+ | File:         sonarSim.cpp
+ | 
+ | Description: Generates object locations, calculates processed times that
+ |              actual receivers would produce, and attempts to resolve target
+ |              positions from those times.
+ |
+ | Parameter Descriptions:
+ | name               description
+ | ------------------ -----------------------------------------------
+ | numObjects         number of objects to simulate
+ ********************************************************************/
+void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
+  double objActualLocs[numObjects][3]; //contains array of objects
+  double objPredLocs[numObjects * EXTRA_FACTOR][3];
+  double times[numObjects][NUM_SENSORS];
+  long long benchTime;
+  int i, j, k, runCount, found, obj, obj1, obj2, obj3, obj4;
+  bool successful;
+
+  Timer timer;
+
+  //init array of objects
+  for(i = 0; i < numObjects; i++) {
+    objActualLocs[i][0] = rand() % 100 - 50;
+    objActualLocs[i][1] = rand() % 50;
+    objActualLocs[i][2] = rand() % 100 - 50;
+    cout << i << ": " << setw(10) << objActualLocs[i][0] << " " << 
+            setw(10) << objActualLocs[i][1] << " " << 
+            setw(10) << objActualLocs[i][2] << endl;
+  }
+ 
+  //TODO implement read in from a file
+  
+  //calculate times for each object and receiver pair
+  for(obj = 0; obj < numObjects; obj++) {
+    Trinar::calcTime(objActualLocs[obj], sensors, times[obj], false, false);
+  }
+
+  cout << "DEBUG - Printing times" << endl;
+  //TODO debug
+  for(i = 0; i < numObjects; i++) {
+    cout << i << ": ";
+
+    for(j = 0; j < 4; j++) {
+      cout << setw(10) << times[i][j] << " ";
+    }
+    cout << endl;
+  }
+  cout << "Printing times complete" << endl << endl;
+
+  //sort times to simulate real data.
+  //also, this way range checks can skip more intelligently
+  //for each receiver
+  for(i = 0; i < 4; i++) {
+    //selection min sort on times
+    for(j = 0; j < numObjects; j++) {
+
+      double min = 1000;
+      int minInd = -1;
+      
+      //find minimum time
+      for(k = j; k < numObjects; k++) {
+        if(times[k][i] < min) {
+          min = times[k][i];
+          minInd = k;
+        }
+      }
+
+      //swap minimum time
+      if(minInd != -1) {
+        double temp = times[j][i];
+        times[j][i] = times[minInd][i];
+        times[minInd][i] = temp;
+      }
+    }
+  }
+
+  cout << "DEBUG - Printing sorted times" << endl;
+  //TODO debug
+  for(i = 0; i < numObjects; i++) {
+    cout << i << ": ";
+
+    for(j = 0; j < 4; j++) {
+      cout << setw(10) << times[i][j] << " ";
+    }
+    cout << endl;
+  }
+  cout << "Printing times complete" << endl << endl;
+
+  double timeTol01 = (sensors.sensArr[0][0] - sensors.sensArr[1][0]) / SPEED_WAVE;
+  double timeTol02 = (sensors.sensArr[2][0] - sensors.sensArr[0][0]) / SPEED_WAVE;
+  double timeTol03 = (sensors.sensArr[3][2] - sensors.sensArr[0][2]) / SPEED_WAVE;
+
+  timer.start();
+  found = 0;
+  runCount = 0;
+  //i = 0;
+
+  
+  for(obj1 = 0; obj1 < numObjects; obj1++) {
+    obj2 = 0;
+    
+    //find lowest times that fall within range
+    while(times[obj2][1] < times[obj1][0] - timeTol01 && obj2 < numObjects)
+      obj2++;
+       
+    //start iterating through each combination of times from rcvrs 1-4
+    for(; obj2 < numObjects && times[obj2][1] <= times[obj1][0] + timeTol01; obj2++) {
+       obj3 = 0;
+       while(times[obj3][2] < times[obj1][0] - timeTol02 && obj3 < numObjects)
+         obj3++;
+
+      //need to reset obj3
+      for(; obj3 < numObjects && times[obj3][2] <= times[obj1][0] + timeTol02; obj3++) {
+        obj4 = 0;
+        while(times[obj4][3] < times[obj1][0] - timeTol03 && obj4 < numObjects)
+          obj4++;
+
+        //need to reset obj4
+        for(; obj4 < numObjects && times[obj4][3] <= times[obj1][0] + timeTol03; obj4++) {
+          
+          //make sure none of the times have already been removed
+          if(times[obj1][0] == 0 || times[obj2][1] == 0 || 
+             times[obj3][2] == 0 || times[obj4][3] == 0)
+            continue;
+
+          successful = Trinar::resolveTArray(times[obj1][0], times[obj2][1], 
+              times[obj3][2], times[obj4][3], sensors, objPredLocs[found], 
+              TOL_DIST, false);
+          runCount++;
+
+          if(successful) {
+            //check for duplicate positioning or close positioning of targets
+            bool dup = false;
+
+            for(j = 0; j < found; j++) {
+              if(isInRange(objPredLocs[j][0] - TOL_OBJ, 
+                      objPredLocs[j][0] + TOL_OBJ, objPredLocs[found][0]) &&
+                  isInRange(objPredLocs[j][1] - TOL_OBJ, 
+                      objPredLocs[j][1] + TOL_OBJ, objPredLocs[found][1]) &&
+                  isInRange(objPredLocs[j][2] - TOL_OBJ, 
+                      objPredLocs[j][2] + TOL_OBJ, objPredLocs[found][2]))
+                dup = true;
+            }
+            
+            //set this result in stone and remove times from times array
+            if(!dup) {
+              times[obj1][0] = 0;
+              times[obj2][1] = 0;
+              times[obj3][2] = 0;
+              times[obj4][3] = 0;
+              //i++;
+              found++;
+
+              cout << "Found: " << found << " " << endl;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  benchTime = timer.end();
+
+  for(i = 0; i < numObjects; i++) {
+    cout << i << ": ";
+    for(j = 0; j < 4; j++) {
+      cout << setw(7) << times[i][j] << " ";
+    }
+    cout << endl; 
+  }
+
+  //TODO sort found positions to correspond to actual positions if possible
+  //need to account for both when actual < found and actual > found
+  
+  double min[3];
+  
+  int minInd;
+
+  //sort actual locs first
+  for(i = 0; i < numObjects; i++) {
+
+    min[0] = 1000;
+    min[1] = 1000;
+    min[2] = 1000;
+
+    minInd = -1;
+    
+    for(j = i; j < numObjects; j++) {
+      if(objActualLocs[j][0] < min[0]) {
+        min[0] = objActualLocs[j][0];
+        min[1] = objActualLocs[j][1];
+        min[2] = objActualLocs[j][2];
+        minInd = j;
+      }
+      else if(objActualLocs[j][0] == min[0]) {
+        if(objActualLocs[j][1] < min[1]) {
+          min[1] = objActualLocs[j][1];
+          min[2] = objActualLocs[j][2];
+          minInd = j;
+        }
+        else if(objActualLocs[j][1] == min[1]) {
+          if(objActualLocs[j][2] < min[2]) {
+            min[2] = objActualLocs[j][2];
+            minInd = j;
+          }
+        }
+      }
+    }
+    if(minInd != -1) {
+      for(k = 0; k < 3; k++) {
+        objActualLocs[minInd][k] = objActualLocs[i][k];
+        objActualLocs[i][k] = min[k];
+      }
+    }
+  }
+
+  //sort pred locs
+  for(i = 0; i < found; i++) {
+
+    min[0] = 1000;
+    min[1] = 1000;
+    min[2] = 1000;
+
+    minInd = -1;
+    
+    for(j = i; j < found; j++) {
+      if(objPredLocs[j][0] < min[0]) {
+        min[0] = objPredLocs[j][0];
+        min[1] = objPredLocs[j][1];
+        min[2] = objPredLocs[j][2];
+        minInd = j;
+      }
+      else if(objPredLocs[j][0] == min[0]) {
+        if(objPredLocs[j][1] < min[1]) {
+          min[1] = objPredLocs[j][1];
+          min[2] = objPredLocs[j][2];
+          minInd = j;
+        }
+        else if(objPredLocs[j][1] == min[1]) {
+          if(objPredLocs[j][2] < min[2]) {
+            min[2] = objPredLocs[j][2];
+            minInd = j;
+          }
+        }
+      }
+    }
+    if(minInd != -1) {
+      for(k = 0; k < 3; k++) {
+        objPredLocs[minInd][k] = objPredLocs[i][k];
+        objPredLocs[i][k] = min[k];
+      }
+    }
+  }
+
+
+
+  cout << "-------------------------------------------------" << endl;
+  cout << "    Actual positions    |    Found positions     " << endl;
+  cout << "-------------------------------------------------" << endl;
+  for(i = 0; i < numObjects; i++) {
+    cout << i << ": " << setw(3) << objActualLocs[i][0] << " " << 
+                         setw(3) << objActualLocs[i][1] << " " << 
+                         setw(3) << objActualLocs[i][2] << " | ";
+
+    if(i < found) {
+      cout << setw(10) << objPredLocs[i][0] << " " <<
+              setw(10) << objPredLocs[i][1] << " " <<
+              setw(10) << objPredLocs[i][2] << endl;
+    }
+    else
+      cout << endl;
+  }
+  cout << endl;
+  cout << "===== Detection Accuracy Simulation Results =====" << endl;
+  cout << "Rcvr min time diffs: " << setw(7) << timeTol01 << " " <<
+                                            setw(7) << timeTol02 << " " <<
+                                            setw(7) << timeTol03 << endl;
+  cout << "Time : " << benchTime / 1000000.0 << " ms" << endl;
+  cout << "Runs : " << runCount << endl;
+  cout << "Found: " << found << endl;
+  cout << "-------------------------------------------------" << endl;
+  cout << endl;
+
+}
