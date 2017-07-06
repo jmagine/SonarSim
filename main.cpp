@@ -1,99 +1,33 @@
  /*****************************************************************************
 
                                                          Author: Jason Ma
-                                                         Date:   Dec 15 2016
+                                                         Date:   Jul 01 2017
                                       sonarSim
 
- File Name:       sonarSim.cpp
- Description:     Contains tools for simulating and benchmarking sonar
-                  algorithms. 
+ File Name:       main.cpp
+ Description:     Runs sonar model while interfacing with DSM.
  *****************************************************************************/
 
 #include <iostream>
 #include <iomanip>
-#include <string>
 #include <cstdlib>
 #include "Trinar.h"
 #include "SensorTArray.h"
 #include "util.h"
 
 using std::cout;
-using std::cin;
-using std::setw;
 using std::endl;
-using std::string;
-using std::stoi;
+using std::setw;
 using std::rand;
 
-//TODO make these dependent on number of objects generated instead of constants
-#define NUM_OBJECTS 8
 #define EXTRA_FACTOR 2
 
 void detectionAccuracySimulation(SensorTArray sensors, int numObjects);
 
- /********************************************************************
- | Routine Name: main
- | File:         sonarSim.cpp
- | 
- | Description: Driver, runs tests used in the simulation based on user input.
- |
- | Parameter Descriptions:
- | name               description
- | ------------------ -----------------------------------------------
- | return             0 on successful run
- ********************************************************************/
 int main(int argc, char * argv[]) {
+  SensorTArray sensors(-0.3, 0.5, 0.4, 200000);
+  detectionAccuracySimulation(sensors, 100);
 
-  //SensorTArray sensors(-0.15, 0.25, 0.2, 200000); 
-  SensorTArray sensors(-0.3, 0.5, 0.4, 2000000);
-  string input = "";
-
-  while(input.compare("q") && input.compare("Q") && !cin.eof()) {
-    cout << "+----------+" << endl;
-    cout << "| SONARSIM |" << endl;
-    cout << "+----------+----------------------------+" << endl;
-    cout << "| 0 - Run detection accuracy simulation |" << endl;
-    cout << "| 1 - Calc times for target             |" << endl;
-    cout << "| q - Quit                              |" << endl;
-    cout << "+---------------------------------------+" << endl;
-    cout << ":";
-    cin >> input;
-
-    //if(!input.compare("0"))
-    //  detectionAccuracySimulation(8);
-
-    if(!input.compare("0")) {
-
-      cout << "Number of objects:";
-      cin >> input;
-
-      detectionAccuracySimulation(sensors, stoi(input));
-
-    }
-    if(!input.compare("1")) {
-      string x;
-      string y;
-      string z;
-      double locs[3];
-      double times[4];
-
-      cout << "Enter x y z:";
-
-      cin >> x >> y >> z;
-
-      locs[0] = stod(x);
-      locs[1] = stod(y);
-      locs[2] = stod(z);
-
-      Trinar::calcTime(locs, sensors, times, false, false);
-      
-      cout << "Times" << endl;
-      cout << times[0] << " " << times[1] << " " << times[2] << " " << times[3] << endl;
-    }
-  }
-
-  cout << endl;
-  
   return 0;
 }
 
