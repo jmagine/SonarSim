@@ -58,7 +58,7 @@ def main():
     #pf = sonar_profiler()
 
     #start processor
-    pc = sonar_processor.sonar_processor()
+    s_p = sonar_processor.sonar_processor()
 
     print('[main] Starting DSM')
     #begin interfacing with DSM
@@ -66,22 +66,25 @@ def main():
 
     print('[main] Starting threads')
     #pf.start()
-    pc.start()
+    s_p.start()
     
     #TODO probably don't need to reg remote buffers, but if need to, it is here
     #for i in range(len(bufNames)):
     #  client.registerRemoteBuffer(bufNames[i], bufIps[i], int(bufIds[i]))
     
-    for i in range(2):
-      pc.callback('go')
-      time.sleep(2)
+    for i in range(100):
+      s_p.callback('go')
+
+      print(str(s_p.found_locs))
+
+      time.sleep(0.5)
 
     pc.join()
   except KeyboardInterrupt:
     print('\n[main] Ctrl+c received. Ending program')
 
     #send end_callbacks to all threads
-    pc.callback('end')
+    s_p.callback('end')
     
     sys.exit(1)
 

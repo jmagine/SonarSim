@@ -5,11 +5,14 @@ ifeq ($(OS),Windows_NT)
 	FixPath = $(subst /,\,$1)
 else
 	COMPILER_FLAGS = -std=c++11 -Wall
+	INCLUDE_PATHS = -I./DistributedSharedMemory/src/Client
+	LIBRARY_PATHS = -lrt -lpthread
 	RM = rm -f
 	FixPath = $1
 endif
 
-OBJS = main.cpp util.cpp Trinar.cpp SensorTArray.cpp
+OBJS = main.cpp ./DistributedSharedMemory/src/Client/DSMClient.cpp ./DistributedSharedMemory/src/Shared/DSMDefinitions.h ./DistributedSharedMemory/src/Shared/DSMBase.cpp util.cpp Trinar.cpp SensorTArray.cpp
+#OBJS = main.cpp util.cpp Trinar.cpp SensorTArray.cpp
 
 OBJ_NAME = topLevelSonar
 
@@ -22,8 +25,9 @@ SIM_OBJ_NAME = sonarSim
 
 all : $(OBJS)
 	g++ $(OBJS) $(COMPILER_FLAGS) -o $(OBJ_NAME)
+#g++ $(OBJS) $(COMPILER_FLAGS) $(INCLUDE_PATHS) -o $(OBJ_NAME) 
 
-sim : $(OBJS)
+sim : $(SIM_OBJS)
 	g++ $(SIM_OBJS) $(COMPILER_FLAGS) -o $(SIM_OBJ_NAME)
 #$(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
 

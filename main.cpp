@@ -10,10 +10,14 @@
 
 #include <iostream>
 #include <iomanip>
+#include <csignal>
 #include <cstdlib>
+#include <time.h>
+#include "./DistributedSharedMemory/src/Client/DSMClient.h"
 #include "Trinar.h"
 #include "SensorTArray.h"
 #include "util.h"
+#include "main.h"
 
 using std::cout;
 using std::endl;
@@ -22,13 +26,50 @@ using std::rand;
 
 #define EXTRA_FACTOR 2
 
-void detectionAccuracySimulation(SensorTArray sensors, int numObjects);
+bool running = true;
+
+void sigintHandler(int x) {
+  cout << "Got Sigint" << endl;
+  running = false;
+}
 
 int main(int argc, char * argv[]) {
-  SensorTArray sensors(-0.3, 0.5, 0.4, 200000);
-  detectionAccuracySimulation(sensors, 100);
+  signal(SIGINT, sigintHandler);
 
+  double times[4][NUM_TARGETS];
+  
+  while(running) {
+    SensorTArray sensors(-0.3, 0.5, 0.4, 200000);
+    double times[4][NUM_TARGETS];
+    double objLocs[NUM_TARGETS][3];
+    double results[4][NUM_TARGETS * 2];
+    
+    generateTimes(times, objLocs);
+
+    triangulateTargets(sensors, times, results);
+
+    //determineAccuracy(
+
+    //detectionAccuracySimulation(sensors, 100);
+  }
   return 0;
+}
+
+void generateTimes(double times[4][NUM_TARGETS], double objLocs[NUM_TARGETS][3]) {
+  
+  srand(time(NULL));
+  
+  for(int i = 0; i < 3; i++) {
+    for(int j = 0; j < NUM_TARGETS; j++) {
+      objLocs[i][j] = rand() % 100 - 50;
+    }
+  }
+
+
+}
+
+void triangulateTargets(SensorTArray sensors, double times[4][NUM_TARGETS], double results[4][NUM_TARGETS * 2]) {
+
 }
 
  /********************************************************************
@@ -125,6 +166,8 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   double timeTol01 = (sensors.sensArr[0][0] - sensors.sensArr[1][0]) / SPEED_WAVE;
   double timeTol02 = (sensors.sensArr[2][0] - sensors.sensArr[0][0]) / SPEED_WAVE;
   double timeTol03 = (sensors.sensArr[3][2] - sensors.sensArr[0][2]) / SPEED_WAVE;
+
+  //SONAR ALG BEGIN------------------------------------------------------------
 
   timer.start();
   found = 0;
