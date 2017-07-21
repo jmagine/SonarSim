@@ -11,8 +11,7 @@ else
 	FixPath = $1
 endif
 
-OBJS = main.cpp ./DistributedSharedMemory/src/Client/DSMClient.cpp ./DistributedSharedMemory/src/Shared/DSMDefinitions.h ./DistributedSharedMemory/src/Shared/DSMBase.cpp util.cpp Trinar.cpp SensorTArray.cpp
-#OBJS = main.cpp util.cpp Trinar.cpp SensorTArray.cpp
+OBJS = main.cpp util.cpp Trinar.cpp SensorTArray.cpp
 
 OBJ_NAME = topLevelSonar
 

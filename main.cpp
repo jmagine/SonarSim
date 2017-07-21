@@ -167,8 +167,11 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects) {
   double timeTol02 = (sensors.sensArr[2][0] - sensors.sensArr[0][0]) / SPEED_WAVE;
   double timeTol03 = (sensors.sensArr[3][2] - sensors.sensArr[0][2]) / SPEED_WAVE;
 
+<<<<<<< HEAD
   //SONAR ALG BEGIN------------------------------------------------------------
 
+=======
+>>>>>>> b29c2dc56f6c5cad99443a229a859950754f591c
   timer.start();
   found = 0;
   runCount = 0;
