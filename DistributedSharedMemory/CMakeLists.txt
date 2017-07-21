@@ -1,0 +1,62 @@
+cmake_minimum_required(VERSION 2.8.9)
+set(PROJECT_NAME_STR DistributedSharedMemory)
+project(${PROJECT_NAME_STR})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++11")
+set(CMAKE_MACOSX_RPATH 1)
+
+find_package(Boost REQUIRED COMPONENTS system thread program_options OPTIONAL_COMPONENTS log date_time python3)
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
+
+if(UNIX AND NOT APPLE)
+    set(LINUX_LIBRARIES rt pthread)
+else()
+    set(LINUX_LIBRARIES )
+endif()
+
+# shared sources
+file(GLOB SHARED_SOURCES "${PROJECT_SOURCE_DIR}/src/Shared/*.cpp")
+set(SHARED_LIBRARIES ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} ${LINUX_LIBRARIES})
+
+# server sources
+file(GLOB SERVER_SOURCES "${PROJECT_SOURCE_DIR}/src/Server/*.cpp")
+set(SERVER_LIBRARIES ${Boost_PROGRAM_OPTIONS_LIBRARY})
+
+# client sources
+file(GLOB CLIENT_SOURCES "${PROJECT_SOURCE_DIR}/src/Client/*.cpp")
+
+# server target
+set(PROJECT_SERVER_NAME DSMServer)
+add_executable(${PROJECT_SERVER_NAME} ${SHARED_SOURCES} ${SERVER_SOURCES})
+option(DISABLE_LOGGING OFF)
+option(LOG_LEVEL_INFO OFF)
+if(Boost_LOG_FOUND AND Boost_DATE_TIME_FOUND AND NOT DISABLE_LOGGING)
+    if(LOG_LEVEL_INFO)
+        target_compile_definitions(${PROJECT_SERVER_NAME} PUBLIC BOOST_LOG_DYN_LINK LOGGING_ENABLED LOG_LEVEL_INFO)
+    else()
+        target_compile_definitions(${PROJECT_SERVER_NAME} PUBLIC BOOST_LOG_DYN_LINK LOGGING_ENABLED)
+    endif()
+    target_link_libraries(${PROJECT_SERVER_NAME} ${SHARED_LIBRARIES} ${SERVER_LIBRARIES} ${Boost_LOG_LIBRARY} ${Boost_DATE_TIME_LIBRARY})
+else()
+    target_link_libraries(${PROJECT_SERVER_NAME} ${SHARED_LIBRARIES} ${SERVER_LIBRARIES})
+endif()
+
+set(PROJECT_CLIENT_TEST_NAME clientTester)
+set(CLIENT_TEST_SOURCES "${PROJECT_SOURCE_DIR}/test/clientTester.cpp")
+set(CLIENT_TEST_LIBRARIES ${Boost_PROGRAM_OPTIONS_LIBRARY})
+add_executable(${PROJECT_CLIENT_TEST_NAME} ${SHARED_SOURCES} ${CLIENT_SOURCES} ${CLIENT_TEST_SOURCES})
+target_link_libraries(${PROJECT_CLIENT_TEST_NAME} ${SHARED_LIBRARIES} ${CLIENT_TEST_LIBRARIES})
+
+if(Boost_PYTHON3_FOUND)
+    find_package(PythonLibs 3.4 REQUIRED)
+    set(PROJECT_PYTHON_MODULE_NAME pydsm)
+    set(CLIENT_PYTHON_LIBRARIES ${Boost_PYTHON3_LIBRARY} ${PYTHON_LIBRARIES})
+    add_library(${PROJECT_PYTHON_MODULE_NAME} MODULE ${SHARED_SOURCES} ${CLIENT_SOURCES})
+    target_compile_definitions(${PROJECT_PYTHON_MODULE_NAME} PUBLIC BUILD_PYTHON_MODULE)
+    target_include_directories(${PROJECT_PYTHON_MODULE_NAME} PUBLIC ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_PYTHON_MODULE_NAME} ${SHARED_LIBRARIES} ${CLIENT_PYTHON_LIBRARIES})
+    set_target_properties(${PROJECT_PYTHON_MODULE_NAME} PROPERTIES PREFIX "" SUFFIX ".so")
+endif()

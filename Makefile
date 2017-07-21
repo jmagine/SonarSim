@@ -5,17 +5,33 @@ ifeq ($(OS),Windows_NT)
 	FixPath = $(subst /,\,$1)
 else
 	COMPILER_FLAGS = -std=c++11 -Wall
+	INCLUDE_PATHS = -I./DistributedSharedMemory/src/Client
+	LIBRARY_PATHS = -lrt -lpthread
 	RM = rm -f
 	FixPath = $1
 endif
 
-OBJS = sonarSim.cpp util.cpp Trinar.cpp SensorTArray.cpp
+OBJS = main.cpp ./DistributedSharedMemory/src/Client/DSMClient.cpp ./DistributedSharedMemory/src/Shared/DSMDefinitions.h ./DistributedSharedMemory/src/Shared/DSMBase.cpp util.cpp Trinar.cpp SensorTArray.cpp
+#OBJS = main.cpp util.cpp Trinar.cpp SensorTArray.cpp
 
-OBJ_NAME = sonarSim
+OBJ_NAME = topLevelSonar
+
+SIM_OBJS = sonarSim.cpp util.cpp Trinar.cpp SensorTArray.cpp
+
+SIM_OBJ_NAME = sonarSim
+#sonarSimSDL: sonarSimSDL.cpp util.o Trinar.o SensorTArray.o Display.o
+
+#util.o: util.h
 
 all : $(OBJS)
 	g++ $(OBJS) $(COMPILER_FLAGS) -o $(OBJ_NAME)
+#g++ $(OBJS) $(COMPILER_FLAGS) $(INCLUDE_PATHS) -o $(OBJ_NAME) 
+
+sim : $(SIM_OBJS)
+	g++ $(SIM_OBJS) $(COMPILER_FLAGS) -o $(SIM_OBJ_NAME)
 #$(INCLUDE_PATHS) $(LIBRARY_PATHS) $(LINKER_FLAGS)
+
+Display.o: Display.h
 
 clean:
 	$(RM) sonarSim.exe *.o core*/
