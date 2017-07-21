@@ -162,6 +162,8 @@ class sonar_processor(threading.Thread):
 
       self.read_times()
 
+      self.times = self.profiler(times, 200000, 0.5)
+
       self.spin()
 
       #self.calc_acc()
@@ -169,7 +171,7 @@ class sonar_processor(threading.Thread):
   '''[profiler]----------------------------------------------------------------
     Extracts peaks from a power over time signal
   --------------------------------------------------------------------------'''
-  def profiler(samples, sample_rate, threshold):
+  def profiler(self, samples, sample_rate, threshold):
     target_cooldown = 10
 
     for sample in samples:
@@ -178,12 +180,16 @@ class sonar_processor(threading.Thread):
         target_cooldown = 10
       taret_cooldown -= 1
 
+    return results
+
   '''[preprocess_samples]------------------------------------------------------
     Generates a power over time curve using a raw signal
   --------------------------------------------------------------------------'''
-  def preprocess_samples(samples):
+  def preprocess_samples(self, samples):
     for i in range(len(samples)):
       samples[i] = (samples[i] * cos(i))^2 + (samples[i] + sin(i))^2
+
+    return samples
 
   '''[gen_times]---------------------------------------------------------------
     Generates random locs to fill up sim_locs.
