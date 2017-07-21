@@ -16,6 +16,7 @@
 #include "Trinar.h"
 #include "SensorTArray.h"
 #include "util.h"
+#include "DSMClient.h"
 
 using std::cout;
 using std::cin;
@@ -44,7 +45,8 @@ void detectionAccuracySimulation(SensorTArray sensors, int numObjects);
  ********************************************************************/
 int main(int argc, char * argv[]) {
   //SensorTArray sensors(-0.15, 0.25, 0.2, 200000);  
-  SensorTArray sensors(-0.3, 0.5, 0.4, 2000000);
+  //SensorTArray sensors(-0.3, 0.5, 0.4, 2000000);
+  SensorTArray sensors(-0.25, 0.35, 0.2, 2000000);
   string input = "";
 
   while(input.compare("q") && input.compare("Q") && !cin.eof()) {
