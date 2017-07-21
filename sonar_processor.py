@@ -4,14 +4,12 @@
 
     File Name  : sonar_processor.py
     Description: Uses extracted peak times to determine target locations.
-                         
 ---*-----------------------------------------------------------------------*'''
 
 import numpy as np
 import random
 import threading
 import time
-
 import sensor_array
 
 '''----------------------------------------------------------------------------
@@ -44,12 +42,14 @@ class sonar_processor(threading.Thread):
     Used for notifying this thread about certain events
   --------------------------------------------------------------------------'''
   def callback(self, message):
-    if message == 'end':
+    if message == 'END':
       self.end_callback = True
-      print('[s_p] End callback received. Shutting down.')
+      #print('[s_p] End callback received. Shutting down.')
 
-    if message == 'go':
+    if message == 'GO':
       self.go_callback = True
+
+    print('[s_p] Callback received: ' + message)
 
   '''[spin]--------------------------------------------------------------------
     Process latest data
@@ -153,6 +153,19 @@ class sonar_processor(threading.Thread):
       self.spin()
 
       #self.calc_acc()
+
+  def profiler(samples, sample_rate, threshold):
+    target_cooldown = 10
+
+    for sample in samples:
+      if sample >= threshold and cooldown == 0:
+        results.append(sample * sample_rate)
+        target_cooldown = 10
+      taret_cooldown -= 1
+
+  def preprocess_samples(samples):
+    for i in range(len(samples)):
+      samples[i] = (samples[i] * cos(i))^2 + (samples[i] + sin(i))^2
 
   def gen_times(self):
     print('[s_p] generating times')

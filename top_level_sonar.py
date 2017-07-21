@@ -73,7 +73,7 @@ def main():
     #  client.registerRemoteBuffer(bufNames[i], bufIps[i], int(bufIds[i]))
     
     for i in range(100):
-      s_p.callback('go')
+      s_p.callback('GO')
 
       print(str(s_p.found_locs))
 
@@ -84,7 +84,7 @@ def main():
     print('\n[main] Ctrl+c received. Ending program')
 
     #send end_callbacks to all threads
-    s_p.callback('end')
+    s_p.callback('END')
     
     sys.exit(1)
 
