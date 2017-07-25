@@ -11,6 +11,13 @@ import random
 import threading
 import time
 import sensor_array
+import sys
+
+sys.path.insert(0, '../DistributedSharedMemory/build')
+sys.path.insert(0, '../PythonSharedBuffers/src')
+from ctypes import *
+from Vision import *
+from Constants import *
 
 '''----------------------------------------------------------------------------
 Config variables
@@ -62,6 +69,8 @@ class sonar_processor(threading.Thread):
     found = 0
     run_count = 0
     found_locs = []
+    
+    self.num_objs = len(self.times)
 
     #TODO fix this
     time_tol_01 = (self.sensors.sensor_locs[1][0]) * -1 / SPEED_WAVE
@@ -93,6 +102,9 @@ class sonar_processor(threading.Thread):
             #make sure none of the times have already been removed
             if self.times[obj1][0] == 0 or self.times[obj2][1] == 0 or self.times[obj3][2] == 0 or self.times[obj4][3] == 0:
               continue
+            
+            if self.end_callback:
+              return
 
             success, locs = resolve_t_array(self.times[obj1][0], self.times[obj2][1], self.times[obj3][2], self.times[obj4][3], self.sensors, TOL_INT, False)
 
@@ -136,9 +148,13 @@ class sonar_processor(threading.Thread):
   def read_times(self):
     self.times = []
 
-    with open(data, 'r') as f:
+    with open('data', 'r') as f:
+      times = []
       for line in f:
-        self.times.append(float(line))
+        times.append(float(line))
+
+      for i in range(4):
+        self.times.append(times)
 
     print(self.times)
 
@@ -162,9 +178,11 @@ class sonar_processor(threading.Thread):
 
       self.read_times()
 
-      self.times = self.profiler(times, 200000, 0.5)
+      self.times = self.profiler(self.times, 200000, 0.5)
 
       self.spin()
+
+      self.write_DSM()
 
       #self.calc_acc()
 
@@ -173,13 +191,19 @@ class sonar_processor(threading.Thread):
   --------------------------------------------------------------------------'''
   def profiler(self, samples, sample_rate, threshold):
     target_cooldown = 10
+    results = []
 
-    for sample in samples:
-      if sample >= threshold and cooldown == 0:
-        results.append(sample * sample_rate)
-        target_cooldown = 10
-      taret_cooldown -= 1
-
+    for rcvr_samples in samples:
+      result_row = []
+      for i in range(len(rcvr_samples)):
+        if rcvr_samples[i] >= threshold and target_cooldown == 0:
+          result_row.append(i / sample_rate)
+          target_cooldown = 10
+      
+        if target_cooldown != 0:
+          target_cooldown -= 1
+      results.append(result_row)
+    print(results)
     return results
 
   '''[preprocess_samples]------------------------------------------------------
@@ -187,9 +211,47 @@ class sonar_processor(threading.Thread):
   --------------------------------------------------------------------------'''
   def preprocess_samples(self, samples):
     for i in range(len(samples)):
-      samples[i] = (samples[i] * cos(i))^2 + (samples[i] + sin(i))^2
+      samples[i] = (samples[i] + cos(i))^2 + (samples[i] + sin(i))^2
 
     return samples
+
+  '''[write_DSM]---------------------------------------------------------------
+    Writes found locs to DSM
+  --------------------------------------------------------------------------'''
+  def write_DSM(self):
+    print('[s_p] Writing to DSM')
+    
+    with open("sonar_log", "a") as f:
+      f.write("hi\n")
+      
+
+    '''
+    all_locs = np.empty(len(self.found_locs), dtype=LocationArray)
+
+    for i in range(len(self.found_locs)):
+      l = Location()
+
+      l.x = self.found_locs[i][0]
+      l.y = self.found_locs[i][1]
+      l.z = self.found_locs[i][2]
+      l.confidence = 1
+      l.loctype = 1
+
+      all_locs[i] = l
+    
+    results = LocationArray()
+    results.locations = all_locs
+    setLocalBufferContents(sonar_results, results)
+    '''
+    
+    '''
+    temp, active = client.getRemoteBufferContents(bufnames, buflists, bufids)
+    if active:
+      if i == 0:
+        temp = Unpack(Kill, temp)
+        data = temp.isKilled
+    
+    '''
 
   '''[gen_times]---------------------------------------------------------------
     Generates random locs to fill up sim_locs.
