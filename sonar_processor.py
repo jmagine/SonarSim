@@ -222,6 +222,8 @@ class sonar_processor(threading.Thread):
     print('[s_p] Writing to DSM')
     
     with open("sonar_log", "a") as f:
+      for i in range(len(self.found_locs)):
+        f.write(self.found_locs[i][0], self.found_locs[i][1], self.found_locs[i][2], "\n")
       f.write("hi\n")
       
 
